@@ -1,13 +1,7 @@
 import { useState } from 'react'
 import { User, Phone, Trophy, Search, Plus, X } from 'lucide-react'
 
-const INITIAL_CLIENTS = [
-    { id: 1, name: 'Jasur Toshmatov', phone: '+998 90 123 4567', sessions: 24, total: 360000 },
-    { id: 2, name: 'Bekzod Mirzayev', phone: '+998 91 234 5678', sessions: 15, total: 210000 },
-    { id: 3, name: 'Alisher Qodirov', phone: '+998 93 345 6789', sessions: 38, total: 570000 },
-    { id: 4, name: 'Sherzod Umarov', phone: '+998 97 456 7890', sessions: 9, total: 128000 },
-    { id: 5, name: 'Mehmet Yusupov', phone: '+998 94 567 8901', sessions: 51, total: 765000 },
-]
+const INITIAL_CLIENTS = []
 
 export default function Clients() {
     const [clients, setClients] = useState(INITIAL_CLIENTS)
