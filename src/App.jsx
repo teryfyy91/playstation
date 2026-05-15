@@ -3,6 +3,7 @@ import Sidebar from './components/Sidebar'
 import Dashboard from './components/Dashboard'
 import Booking from './components/Booking'
 import Clients from './components/Clients'
+import Spendings from './components/Spendings'
 import Settings from './components/Settings'
 import './index.css'
 
@@ -14,6 +15,7 @@ export default function App() {
       case 'dashboard': return <Dashboard />
       case 'booking': return <Booking />
       case 'clients': return <Clients />
+      case 'spendings': return <Spendings />
       case 'settings': return <Settings />
       default: return <Dashboard />
     }

@@ -248,10 +248,24 @@ function StartModal({ room, onConfirm, onClose }) {
 
 // ─── Dashboard Page ───────────────────────────────────────────────────────────
 export default function Dashboard() {
-    const [freeRooms, setFreeRooms] = useState([])
-    const [activeRooms, setActiveRooms] = useState([])
+    const [freeRooms, setFreeRooms] = useState(() => {
+        const saved = localStorage.getItem('ps_freeRooms')
+        return saved ? JSON.parse(saved) : []
+    })
+    const [activeRooms, setActiveRooms] = useState(() => {
+        const saved = localStorage.getItem('ps_activeRooms')
+        return saved ? JSON.parse(saved) : []
+    })
     const [modalRoom, setModalRoom] = useState(null)
     const [showAddRoom, setShowAddRoom] = useState(false)
+
+    useEffect(() => {
+        localStorage.setItem('ps_freeRooms', JSON.stringify(freeRooms))
+    }, [freeRooms])
+
+    useEffect(() => {
+        localStorage.setItem('ps_activeRooms', JSON.stringify(activeRooms))
+    }, [activeRooms])
 
     const handleAddRoom = (room) => {
         setFreeRooms(prev => [...prev, room])

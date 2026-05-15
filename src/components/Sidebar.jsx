@@ -1,9 +1,10 @@
-import { LayoutDashboard, CalendarCheck, Users, Settings, Gamepad2, LogOut } from 'lucide-react'
+import { LayoutDashboard, CalendarCheck, Users, Settings, Gamepad2, LogOut, Wallet } from 'lucide-react'
 
 const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'booking', label: 'Bron qilish', icon: CalendarCheck },
     { id: 'clients', label: 'Mijozlar', icon: Users },
+    { id: 'spendings', label: 'Xarajatlar', icon: Wallet },
     { id: 'settings', label: 'Sozlamalar', icon: Settings },
 ]
 

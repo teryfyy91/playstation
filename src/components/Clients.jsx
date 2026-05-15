@@ -1,13 +1,20 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { User, Phone, Trophy, Search, Plus, X } from 'lucide-react'
 
 const INITIAL_CLIENTS = []
 
 export default function Clients() {
-    const [clients, setClients] = useState(INITIAL_CLIENTS)
+    const [clients, setClients] = useState(() => {
+        const saved = localStorage.getItem('ps_clients')
+        return saved ? JSON.parse(saved) : INITIAL_CLIENTS
+    })
     const [search, setSearch] = useState('')
     const [showForm, setShowForm] = useState(false)
     const [form, setForm] = useState({ name: '', phone: '' })
+
+    useEffect(() => {
+        localStorage.setItem('ps_clients', JSON.stringify(clients))
+    }, [clients])
 
     const filtered = clients.filter(c =>
         c.name.toLowerCase().includes(search.toLowerCase()) ||

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { CalendarCheck, Clock, Plus, X, CalendarX } from 'lucide-react'
 
 const statusColor = {
@@ -8,9 +8,16 @@ const statusColor = {
 }
 
 export default function Booking() {
-    const [bookings, setBookings] = useState([])
+    const [bookings, setBookings] = useState(() => {
+        const saved = localStorage.getItem('ps_bookings')
+        return saved ? JSON.parse(saved) : []
+    })
     const [showForm, setShowForm] = useState(false)
     const [form, setForm] = useState({ room: '', client: '', date: '', time: '', hours: 1 })
+
+    useEffect(() => {
+        localStorage.setItem('ps_bookings', JSON.stringify(bookings))
+    }, [bookings])
 
     const handleAdd = () => {
         if (!form.room || !form.client || !form.date || !form.time) return
