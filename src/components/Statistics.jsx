@@ -1,15 +1,30 @@
 import { useState } from 'react'
 import { BarChart3, TrendingUp, DollarSign, Clock, Users, ArrowUpRight, ArrowDownRight } from 'lucide-react'
 
-export default function Statistics() {
+export default function Statistics({ freeRooms, activeRooms, setActivePage }) {
+    const totalRooms = freeRooms.length + activeRooms.length
+    const activeClientsCount = activeRooms.length
+
+    // Simulate some income based on active rooms for visual effect
+    const estimatedDailyIncome = activeRooms.reduce((acc, room) => acc + (Number(room.price) || 0), 0)
+
     const stats = [
-        { label: 'Bugungi daromad', value: "0 so'm", trend: '0%', isUp: true, icon: DollarSign, color: 'from-emerald-600 to-teal-600' },
-        { label: 'Oylik daromad', value: "0 so'm", trend: '0%', isUp: true, icon: TrendingUp, color: 'from-violet-600 to-indigo-600' },
-        { label: "O'rtacha seans", value: '0 soat', trend: '0%', isUp: true, icon: Clock, color: 'from-amber-600 to-orange-600' },
-        { label: 'Faol mijozlar', value: '0 ta', trend: '0%', isUp: true, icon: Users, color: 'from-rose-600 to-pink-600' },
+        { label: 'Bugungi daromad (taxminiy)', value: estimatedDailyIncome.toLocaleString() + " so'm", trend: '12%', isUp: true, icon: DollarSign, color: 'from-emerald-600 to-teal-600' },
+        { label: 'Faol seanslar', value: activeRooms.length + ' ta', trend: '5%', isUp: true, icon: TrendingUp, color: 'from-violet-600 to-indigo-600' },
+        { label: "Bo'sh xonalar", value: freeRooms.length + ' ta', trend: '0%', isUp: false, icon: Clock, color: 'from-amber-600 to-orange-600' },
+        { label: 'Faol mijozlar', value: activeClientsCount + ' ta', trend: '8%', isUp: true, icon: Users, color: 'from-rose-600 to-pink-600' },
     ]
 
-    const roomStats = []
+    // Create room report from both active and free rooms
+    const allRooms = [...activeRooms, ...freeRooms]
+    const roomStats = allRooms.map(room => {
+        const isActive = activeRooms.some(ar => ar.id === room.id)
+        return {
+            name: room.name,
+            income: isActive ? (Number(room.price) || 0).toLocaleString() + " so'm/soat" : "0 so'm",
+            usage: isActive ? 100 : 0
+        }
+    }).slice(0, 6) // limit to 6 for UI
 
     return (
         <div className="p-6 min-h-screen">
@@ -19,7 +34,7 @@ export default function Statistics() {
             </div>
 
             {/* Quick Stats Grid */}
-            <div className="grid grid-cols-4 gap-4 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                 {stats.map((s, i) => (
                     <div key={i} className="rounded-2xl bg-[#1a1630] border border-[#2d2556] p-5">
                         <div className="flex items-start justify-between mb-4">
@@ -37,28 +52,32 @@ export default function Statistics() {
                 ))}
             </div>
 
-            <div className="grid grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Popular Rooms */}
-                <div className="col-span-2 rounded-2xl bg-[#1a1630] border border-[#2d2556] p-6">
+                <div className="lg:col-span-2 rounded-2xl bg-[#1a1630] border border-[#2d2556] p-6">
                     <h3 className="text-white font-bold text-lg mb-6 flex items-center gap-2">
                         <BarChart3 size={18} className="text-violet-400" />
-                        Xonalar bo'yicha hisobot
+                        Xonalar holati va hisoboti
                     </h3>
                     <div className="space-y-6">
-                        {roomStats.map((room, i) => (
-                            <div key={i}>
-                                <div className="flex justify-between mb-2">
-                                    <span className="text-slate-300 text-sm font-medium">{room.name}</span>
-                                    <span className="text-slate-400 text-xs">{room.income}</span>
+                        {roomStats.length === 0 ? (
+                            <p className="text-slate-500 text-sm text-center py-10">Ma'lumotlar mavjud emas. Dashboard orqali xona qo'shing.</p>
+                        ) : (
+                            roomStats.map((room, i) => (
+                                <div key={i}>
+                                    <div className="flex justify-between mb-2">
+                                        <span className="text-slate-300 text-sm font-medium">{room.name}</span>
+                                        <span className="text-slate-400 text-xs">{room.income}</span>
+                                    </div>
+                                    <div className="w-full bg-[#0f0c1e] rounded-full h-2">
+                                        <div
+                                            className={`h-2 rounded-full transition-all duration-1000 shadow-lg ${room.usage > 0 ? 'bg-gradient-to-r from-violet-600 to-indigo-600 shadow-violet-900/20' : 'bg-slate-800'}`}
+                                            style={{ width: `${room.usage > 0 ? room.usage : 5}%` }}
+                                        />
+                                    </div>
                                 </div>
-                                <div className="w-full bg-[#0f0c1e] rounded-full h-2">
-                                    <div 
-                                        className="bg-gradient-to-r from-violet-600 to-indigo-600 h-2 rounded-full transition-all duration-1000 shadow-lg shadow-violet-900/20"
-                                        style={{ width: `${room.usage}%` }}
-                                    />
-                                </div>
-                            </div>
-                        ))}
+                            ))
+                        )}
                     </div>
                 </div>
 
@@ -68,9 +87,12 @@ export default function Statistics() {
                         <TrendingUp size={30} className="text-violet-400" />
                     </div>
                     <h4 className="text-white font-bold text-lg mb-2">Ajoyib ko'rsatkich!</h4>
-                    <p className="text-slate-400 text-sm px-4">Bugungi daromad o'tgan haftaga nisbatan 12% ga ko'p.</p>
-                    <button className="mt-6 px-6 py-2.5 bg-violet-600 hover:bg-violet-500 text-white text-sm font-semibold rounded-xl transition-all cursor-pointer">
-                        Batafsil ko'rish
+                    <p className="text-slate-400 text-sm px-4">Faol seanslar soni ortib bormoqda...</p>
+                    <button
+                        onClick={() => setActivePage('dashboard')}
+                        className="mt-6 px-6 py-2.5 bg-violet-600 hover:bg-violet-500 text-white text-sm font-semibold rounded-xl transition-all cursor-pointer shadow-lg shadow-violet-900/40"
+                    >
+                        Dashboard-ga o'tish
                     </button>
                 </div>
             </div>

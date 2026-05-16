@@ -1,15 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Plus, X, Pencil, Trash2, Wallet, TrendingDown, Receipt, ShoppingBag } from 'lucide-react'
-
-const CATEGORY_COLORS = {
-    'Oziq-ovqat': 'bg-amber-900/40 text-amber-400 border-amber-700/40',
-    'Texnika': 'bg-blue-900/40 text-blue-400 border-blue-700/40',
-    'Kommunal': 'bg-cyan-900/40 text-cyan-400 border-cyan-700/40',
-    'Maosh': 'bg-emerald-900/40 text-emerald-400 border-emerald-700/40',
-    'Boshqa': 'bg-violet-900/40 text-violet-400 border-violet-700/40',
-}
-
-const CATEGORIES = Object.keys(CATEGORY_COLORS)
+import { Plus, X, Pencil, Trash2, Wallet, TrendingDown, Receipt } from 'lucide-react'
 
 export default function Spendings() {
     const [spendings, setSpendings] = useState(() => {
@@ -18,7 +8,7 @@ export default function Spendings() {
     })
     const [showForm, setShowForm] = useState(false)
     const [editId, setEditId] = useState(null)
-    const [form, setForm] = useState({ amount: '', category: 'Oziq-ovqat', date: '', description: '' })
+    const [form, setForm] = useState({ amount: '', date: '', description: '' })
 
     useEffect(() => {
         localStorage.setItem('ps_spendings', JSON.stringify(spendings))
@@ -26,24 +16,22 @@ export default function Spendings() {
 
     const totalMonth = spendings.reduce((acc, curr) => acc + Number(curr.amount), 0)
 
-    const catTotals = spendings.reduce((acc, curr) => {
-        acc[curr.category] = (acc[curr.category] || 0) + Number(curr.amount)
-        return acc
-    }, {})
-
-    const topCategory = Object.keys(catTotals).length
-        ? Object.keys(catTotals).reduce((a, b) => catTotals[a] > catTotals[b] ? a : b)
-        : '-'
-
-    // Simplified for mockup, just uses last item's date or something, but we'll leave it as simple logic
+    // Calculate last 24h totals
     let last24hCount = 0;
+    const now = new Date();
     spendings.forEach(s => {
-        // Just as mock, assume everything is recent if no complex date logic is added 
-        last24hCount += Number(s.amount);
+        const sDate = new Date(s.date);
+        const diffHrs = (now - sDate) / (1000 * 60 * 60);
+        if (diffHrs <= 24) {
+            last24hCount += Number(s.amount);
+        } else {
+            // If we don't have precise dates, we just assume last added items are recent for now
+            // But let's actually just sum everything for the 24h card if data is fresh
+        }
     });
 
     const handleAddOrEdit = () => {
-        if (!form.amount || !form.category || !form.date || !form.description) return
+        if (!form.amount || !form.date || !form.description) return
 
         if (editId) {
             setSpendings(prev => prev.map(s => s.id === editId ? { ...s, ...form } : s))
@@ -57,7 +45,7 @@ export default function Spendings() {
     const startEdit = (id) => {
         const target = spendings.find(s => s.id === id)
         if (target) {
-            setForm({ amount: target.amount, category: target.category, date: target.date, description: target.description })
+            setForm({ amount: target.amount, date: target.date, description: target.description })
             setEditId(id)
             setShowForm(true)
         }
@@ -72,107 +60,103 @@ export default function Spendings() {
     const closeModal = () => {
         setShowForm(false)
         setEditId(null)
-        setForm({ amount: '', category: 'Oziq-ovqat', date: '', description: '' })
+        setForm({ amount: '', date: '', description: '' })
     }
 
-    const inputCls = "w-full bg-[#0f0c1e] border border-[#2d2556] text-white rounded-xl px-4 py-2.5 text-sm outline-none focus:border-violet-500 transition"
+    const inputCls = "w-full bg-[#0f0c1e] border border-[#2d2556] text-white rounded-xl px-4 py-2.5 text-sm outline-none focus:border-violet-500 transition placeholder:text-slate-700"
 
     return (
-        <div className="p-6 min-h-screen">
+        <div className="p-6 min-h-screen animate-fadeIn">
             <div className="mb-8 flex items-center justify-between">
                 <div>
-                    <h1 className="text-white text-2xl font-bold">Xarajatlar</h1>
-                    <p className="text-slate-400 text-sm mt-1">Klub xarajatlarini boshqarish</p>
+                    <h1 className="text-white text-2xl font-bold uppercase tracking-tighter">Xarajatlar</h1>
+                    <p className="text-slate-400 text-sm mt-1 uppercase tracking-widest font-medium text-[10px]">Klub xarajatlarini monitoring qilish</p>
                 </div>
                 <button
                     onClick={() => setShowForm(true)}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-sm font-semibold hover:from-violet-500 hover:to-indigo-500 transition shadow-lg shadow-violet-900/40 cursor-pointer"
+                    className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-xs font-black uppercase tracking-widest hover:scale-105 transition shadow-lg shadow-violet-900/40 cursor-pointer"
                 >
                     <Plus size={16} /> Yangi xarajat
                 </button>
             </div>
 
-            {/* Dashboard Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div className="bg-[#1a1630] border border-[#2d2556] rounded-2xl p-5 flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-violet-900/40 border border-violet-700/40 flex items-center justify-center text-violet-400">
-                        <Wallet size={24} />
+            {/* Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+                <div className="bg-[#1a1630] border border-[#2d2556] rounded-[32px] p-6 flex items-center gap-5 shadow-xl relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-violet-600/10 rounded-full -mr-16 -mt-16 blur-3xl group-hover:bg-violet-600/20 transition-all duration-700"></div>
+                    <div className="w-14 h-14 rounded-2xl bg-violet-600/20 border border-violet-500/30 flex items-center justify-center text-violet-400 shadow-inner">
+                        <Wallet size={28} />
                     </div>
                     <div>
-                        <p className="text-slate-400 text-sm mb-1">Umumiy xarajat (Shu oy)</p>
-                        <h3 className="text-white text-xl font-bold">{totalMonth.toLocaleString()} so'm</h3>
+                        <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] mb-1">Umumiy xarajat</p>
+                        <h3 className="text-white text-3xl font-black tracking-tighter">{totalMonth.toLocaleString()} <span className="text-xs text-slate-500 font-bold ml-1 uppercase">so'm</span></h3>
                     </div>
                 </div>
-                <div className="bg-[#1a1630] border border-[#2d2556] rounded-2xl p-5 flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-blue-900/40 border border-blue-700/40 flex items-center justify-center text-blue-400">
-                        <ShoppingBag size={24} />
+                <div className="bg-[#1a1630] border border-[#2d2556] rounded-[32px] p-6 flex items-center gap-5 shadow-xl relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-600/10 rounded-full -mr-16 -mt-16 blur-3xl group-hover:bg-emerald-600/20 transition-all duration-700"></div>
+                    <div className="w-14 h-14 rounded-2xl bg-emerald-600/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-inner">
+                        <TrendingDown size={28} />
                     </div>
                     <div>
-                        <p className="text-slate-400 text-sm mb-1">Eng ko'p sarf</p>
-                        <h3 className="text-white text-xl font-bold">{topCategory}</h3>
-                    </div>
-                </div>
-                <div className="bg-[#1a1630] border border-[#2d2556] rounded-2xl p-5 flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-emerald-900/40 border border-emerald-700/40 flex items-center justify-center text-emerald-400">
-                        <TrendingDown size={24} />
-                    </div>
-                    <div>
-                        <p className="text-slate-400 text-sm mb-1">Oxirgi 24 soatda</p>
-                        <h3 className="text-white text-xl font-bold">{last24hCount.toLocaleString()} so'm</h3>
+                        <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] mb-1">Eng ko'p sarf</p>
+                        <h3 className="text-white text-2xl font-black tracking-tighter truncate max-w-[200px]">
+                            {spendings.length > 0 ? spendings.reduce((a, b) => Number(a.amount) > Number(b.amount) ? a : b).description : '-'}
+                        </h3>
                     </div>
                 </div>
             </div>
 
-            {/* Empty state */}
+            {/* Empty State */}
             {spendings.length === 0 && (
-                <div className="flex flex-col items-center justify-center py-24 text-center">
-                    <div className="w-16 h-16 rounded-2xl bg-[#1a1630] border border-[#2d2556] flex items-center justify-center mb-4">
-                        <Receipt size={28} className="text-violet-400" />
+                <div className="flex flex-col items-center justify-center py-32 text-center bg-[#1a1630]/30 border-2 border-dashed border-[#2d2556] rounded-[48px]">
+                    <div className="w-20 h-20 rounded-3xl bg-[#0f0c1e] border border-[#2d2556] flex items-center justify-center mb-6 shadow-2xl">
+                        <Receipt size={32} className="text-slate-700" />
                     </div>
-                    <p className="text-white font-semibold text-lg mb-2">Hali xarajatlar yo'q</p>
-                    <p className="text-slate-500 text-sm mb-6">Xarajatni kiritish uchun "Yangi xarajat" tugmasini bosing</p>
+                    <p className="text-white font-black text-xl mb-2">Xarajatlar mavjud emas</p>
+                    <p className="text-slate-600 text-sm mb-8 font-medium">Barcha chiqimlarni shu yerda kuzatib borishingiz mumkin</p>
                     <button
                         onClick={() => setShowForm(true)}
-                        className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-sm font-semibold hover:from-violet-500 hover:to-indigo-500 transition shadow-lg shadow-violet-900/40 cursor-pointer"
+                        className="flex items-center gap-3 px-8 py-4 rounded-2xl bg-white text-black text-xs font-black uppercase tracking-[0.2em] hover:bg-violet-600 hover:text-white transition-all shadow-xl cursor-pointer"
                     >
-                        <Plus size={16} /> Birinchi xarajatni qo'shish
+                        <Plus size={18} /> Qo'shish
                     </button>
                 </div>
             )}
 
             {/* List */}
             {spendings.length > 0 && (
-                <div className="space-y-3">
+                <div className="space-y-4">
                     {spendings.map(s => (
-                        <div key={s.id} className="rounded-2xl bg-[#1a1630] border border-[#2d2556] p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:border-violet-500/40 hover:bg-[#1e1a3a] transition-all">
-                            <div className="flex items-center gap-4">
-                                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-700 flex items-center justify-center flex-shrink-0">
-                                    <TrendingDown size={18} className="text-white" />
+                        <div key={s.id} className="rounded-[28px] bg-[#1a1630] border border-[#2d2556] p-6 flex items-center justify-between gap-6 hover:border-violet-500/30 hover:bg-[#1e1a3a] transition-all duration-300 shadow-md">
+                            <div className="flex items-center gap-5">
+                                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#2d2556] to-[#0f0c1e] border border-[#3d3470] flex items-center justify-center flex-shrink-0 text-violet-400 font-black">
+                                    <TrendingDown size={20} />
                                 </div>
                                 <div>
-                                    <p className="text-white font-semibold">{s.description}</p>
-                                    <p className="text-slate-400 text-xs mt-0.5">{s.date}</p>
+                                    <p className="text-white font-black text-lg tracking-tight mb-0.5">{s.description}</p>
+                                    <div className="flex items-center gap-3">
+                                        <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">{s.date}</p>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-4 md:ml-auto">
-                                <span className={`text-xs px-3 py-1.5 rounded-full font-semibold border ${CATEGORY_COLORS[s.category]}`}>
-                                    {s.category}
-                                </span>
-                                <h4 className="text-white font-bold ml-2">{Number(s.amount).toLocaleString()} so'm</h4>
+                            <div className="flex items-center gap-6">
+                                <div className="text-right">
+                                    <h4 className="text-white font-black text-xl tracking-tighter">{Number(s.amount).toLocaleString()} <span className="text-[10px] text-slate-500 uppercase ml-1">so'm</span></h4>
+                                </div>
 
-                                <div className="flex items-center gap-2 ml-4">
+                                <div className="flex items-center gap-2">
                                     <button
                                         onClick={() => startEdit(s.id)}
-                                        className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#2d2556] text-slate-400 hover:bg-violet-600 hover:text-white transition cursor-pointer"
+                                        className="w-10 h-10 flex items-center justify-center rounded-xl bg-[#0f0c1e] border border-[#2d2556] text-slate-400 hover:bg-violet-600 hover:text-white hover:border-violet-500 transition-all cursor-pointer"
                                     >
-                                        <Pencil size={14} />
+                                        <Pencil size={16} />
                                     </button>
                                     <button
                                         onClick={() => handleDelete(s.id)}
-                                        className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#2d2556] text-slate-400 hover:bg-red-600 hover:text-white transition cursor-pointer"
+                                        className="w-10 h-10 flex items-center justify-center rounded-xl bg-[#0f0c1e] border border-[#2d2556] text-slate-400 hover:bg-red-600 hover:text-white hover:border-red-500 transition-all cursor-pointer"
                                     >
-                                        <Trash2 size={14} />
+                                        <Trash2 size={16} />
                                     </button>
                                 </div>
                             </div>
@@ -183,71 +167,62 @@ export default function Spendings() {
 
             {/* Modal */}
             {showForm && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-                    <div className="bg-[#1a1630] border border-[#2d2556] rounded-2xl p-6 w-full max-w-sm shadow-2xl overflow-y-auto max-h-screen">
-                        <div className="flex justify-between items-center mb-5">
-                            <h3 className="text-white font-bold text-lg">{editId ? 'Xarajatni tahrirlash' : 'Yangi xarajat'}</h3>
-                            <button onClick={closeModal} className="text-slate-400 hover:text-white transition">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-xl p-4">
+                    <div className="bg-[#1a1630] border border-[#2d2556] rounded-[36px] p-8 w-full max-w-sm shadow-2xl animate-scaleUp">
+                        <div className="flex justify-between items-center mb-8">
+                            <h3 className="text-white font-black text-xl uppercase tracking-tighter">{editId ? 'Tahrirlash' : 'Yangi Xarajat'}</h3>
+                            <button onClick={closeModal} className="w-10 h-10 rounded-full bg-[#0f0c1e] flex items-center justify-center text-slate-400 hover:text-white transition cursor-pointer">
                                 <X size={20} />
                             </button>
                         </div>
 
-                        <div className="mb-4">
-                            <label className="block text-slate-400 text-xs mb-1">Miqdor (so'm)</label>
-                            <input
-                                type="number"
-                                value={form.amount}
-                                onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
-                                placeholder="Masalan: 150000"
-                                className={inputCls}
-                            />
-                        </div>
+                        <div className="space-y-6 mb-10">
+                            <div>
+                                <label className="block text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] mb-2 ml-1">Miqdor (so'm)</label>
+                                <div className="relative">
+                                    <input
+                                        type="number"
+                                        value={form.amount}
+                                        onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
+                                        placeholder="0.00"
+                                        className={inputCls}
+                                    />
+                                    <span className="absolute right-4 top-2.5 text-[10px] text-slate-600 font-bold">SO'M</span>
+                                </div>
+                            </div>
 
-                        <div className="mb-4">
-                            <label className="block text-slate-400 text-xs mb-1">Kategoriya</label>
-                            <select
-                                value={form.category}
-                                onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
-                                className={inputCls}
-                            >
-                                {CATEGORIES.map(c => (
-                                    <option key={c} value={c} className="bg-[#0f0c1e]">{c}</option>
-                                ))}
-                            </select>
-                        </div>
+                            <div>
+                                <label className="block text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] mb-2 ml-1">Sana</label>
+                                <input
+                                    type="date"
+                                    value={form.date}
+                                    onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
+                                    className={inputCls}
+                                />
+                            </div>
 
-                        <div className="mb-4">
-                            <label className="block text-slate-400 text-xs mb-1">Sana</label>
-                            <input
-                                type="date"
-                                value={form.date}
-                                onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
-                                className={inputCls}
-                            />
-                        </div>
-
-                        <div className="mb-6">
-                            <label className="block text-slate-400 text-xs mb-1">Izoh (qisqa)</label>
-                            <input
-                                type="text"
-                                value={form.description}
-                                onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-                                placeholder="Nima uchun sarflandi?"
-                                className={inputCls}
-                            />
+                            <div>
+                                <label className="block text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] mb-2 ml-1">Izoh (nima uchun?)</label>
+                                <textarea
+                                    value={form.description}
+                                    onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+                                    placeholder="Masalan: Elektr energiyasi to'lovi..."
+                                    className={`${inputCls} h-24 resize-none pt-4`}
+                                />
+                            </div>
                         </div>
 
                         <div className="flex gap-3">
                             <button
                                 onClick={closeModal}
-                                className="flex-1 py-2.5 rounded-xl bg-[#2d2556] text-slate-300 text-sm font-semibold hover:bg-[#3d3470] transition cursor-pointer"
+                                className="flex-1 py-4 rounded-2xl bg-[#0f0c1e] text-slate-500 text-xs font-black uppercase tracking-[0.2em] hover:text-white transition-all cursor-pointer"
                             >
                                 Bekor
                             </button>
                             <button
                                 onClick={handleAddOrEdit}
-                                disabled={!form.amount || !form.category || !form.date || !form.description}
-                                className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-sm font-semibold hover:from-violet-500 hover:to-indigo-500 transition shadow-lg shadow-violet-900/40 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                                disabled={!form.amount || !form.date || !form.description}
+                                className="flex-[2] py-4 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-xs font-black uppercase tracking-[0.2em] shadow-lg shadow-violet-900/40 hover:scale-[1.02] active:scale-95 transition-all cursor-pointer disabled:opacity-30 disabled:grayscale disabled:cursor-not-allowed"
                             >
                                 Saqlash
                             </button>

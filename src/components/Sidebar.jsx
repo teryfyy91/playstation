@@ -1,16 +1,16 @@
-import { LayoutDashboard, CalendarCheck, Users, Settings, Gamepad2, LogOut, Wallet, BarChart3, Briefcase } from 'lucide-react'
+import { LayoutDashboard, CalendarCheck, Users, Settings, Gamepad2, LogOut, Wallet, BarChart3, Briefcase, ShoppingCart } from 'lucide-react'
 
 const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'booking', label: 'Bron qilish', icon: CalendarCheck },
     { id: 'statistics', label: 'Statistika', icon: BarChart3 },
-    { id: 'clients', label: 'Mijozlar', icon: Users },
+    { id: 'bar', label: 'Bar / Sklad', icon: ShoppingCart },
     { id: 'spendings', label: 'Xarajatlar', icon: Wallet },
     { id: 'employer', label: 'Xodimlar', icon: Briefcase },
     { id: 'settings', label: 'Sozlamalar', icon: Settings },
 ]
 
-export default function Sidebar({ activePage, setActivePage }) {
+export default function Sidebar({ activePage, setActivePage, onLogout }) {
     return (
         <aside className="w-64 h-full bg-[#13102a] border-r border-[#2d2556] flex flex-col">
             {/* Logo */}
@@ -47,7 +47,10 @@ export default function Sidebar({ activePage, setActivePage }) {
 
             {/* Logout */}
             <div className="px-4 py-6 border-t border-[#2d2556]">
-                <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-400 hover:bg-red-900/30 hover:text-red-400 transition-all duration-200 cursor-pointer">
+                <button
+                    onClick={onLogout}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-400 hover:bg-red-900/30 hover:text-red-400 transition-all duration-200 cursor-pointer"
+                >
                     <LogOut size={18} />
                     Chiqish
                 </button>

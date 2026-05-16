@@ -64,3 +64,15 @@ body {
 .warn-blink {
   animation: countdown-warn 1s ease-in-out infinite;
 }
+
+/* Hide number input spinners */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type=number] {
+  -moz-appearance: textfield;
+  appearance: none;
+}

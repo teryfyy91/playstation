@@ -1,17 +1,24 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Briefcase, UserPlus, Shield, Clock, Phone, Mail, MoreHorizontal, Trash2 } from 'lucide-react'
 
 const INITIAL_STAFF = []
 
 export default function Employer() {
-    const [staff, setStaff] = useState(INITIAL_STAFF)
+    const [staff, setStaff] = useState(() => {
+        const saved = localStorage.getItem('ps_staff')
+        return saved ? JSON.parse(saved) : INITIAL_STAFF
+    })
     const [showForm, setShowForm] = useState(false)
-    const [form, setForm] = useState({ name: '', role: 'Operator', phone: '' })
+    const [form, setForm] = useState({ name: '', role: 'Operator', phone: '', email: '', password: '' })
+
+    useEffect(() => {
+        localStorage.setItem('ps_staff', JSON.stringify(staff))
+    }, [staff])
 
     const handleAdd = () => {
-        if (!form.name || !form.phone) return
-        setStaff(prev => [...prev, { ...form, id: Date.now(), status: 'Dam olmoqda', email: form.name.toLowerCase().replace(' ', '.') + '@psclub.uz' }])
-        setForm({ name: '', role: 'Operator', phone: '' })
+        if (!form.name || !form.phone || !form.email || !form.password) return
+        setStaff(prev => [...prev, { ...form, id: Date.now(), status: 'Dam olmoqda' }])
+        setForm({ name: '', role: 'Operator', phone: '', email: '', password: '' })
         setShowForm(false)
     }
 
@@ -62,7 +69,7 @@ export default function Employer() {
                                     <span className={`w-2 h-2 rounded-full ${s.status === 'Ishda' ? 'bg-emerald-400' : 'bg-slate-600'}`}></span>
                                     <p className={`text-xs font-medium ${s.status === 'Ishda' ? 'text-emerald-400' : 'text-slate-400'}`}>{s.status}</p>
                                 </div>
-                                <p className="text-slate-500 text-[10px] mt-0.5">So'nggi faollik: 2 soat avval</p>
+                                <p className="text-slate-500 text-[10px] mt-0.5">So'nggi faollik: hozir</p>
                             </div>
                             <button className="p-2 rounded-lg bg-[#2d2556] text-slate-400 hover:text-white transition cursor-pointer">
                                 <MoreHorizontal size={16} />
@@ -77,7 +84,7 @@ export default function Employer() {
 
             {showForm && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-                    <div className="bg-[#1a1630] border border-[#2d2556] rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+                    <div className="bg-[#1a1630] border border-[#2d2556] rounded-2xl p-6 w-full max-w-sm shadow-2xl overflow-y-auto max-h-[90vh]">
                         <h3 className="text-white font-bold text-lg mb-5">Yangi xodim qo'shish</h3>
                         <div className="space-y-4">
                             <div>
@@ -85,24 +92,36 @@ export default function Employer() {
                                 <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                                     placeholder="Ism kiriting..." className="w-full bg-[#0f0c1e] border border-[#2d2556] text-white rounded-xl px-4 py-2.5 text-sm outline-none focus:border-violet-500 transition" />
                             </div>
-                            <div>
-                                <label className="block text-slate-400 text-xs mb-1">Lavozim</label>
-                                <select value={form.role} onChange={e => setForm(f => ({ ...f, role: e.target.value }))}
-                                    className="w-full bg-[#0f0c1e] border border-[#2d2556] text-white rounded-xl px-4 py-2.5 text-sm outline-none focus:border-violet-500 transition">
-                                    <option value="Admin">Admin</option>
-                                    <option value="Operator">Operator</option>
-                                    <option value="Kassir">Kassir</option>
-                                </select>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-slate-400 text-xs mb-1">Lavozim</label>
+                                    <select value={form.role} onChange={e => setForm(f => ({ ...f, role: e.target.value }))}
+                                        className="w-full bg-[#0f0c1e] border border-[#2d2556] text-white rounded-xl px-4 py-2.5 text-sm outline-none focus:border-violet-500 transition cursor-pointer">
+                                        <option value="Admin">Admin</option>
+                                        <option value="Operator">Operator</option>
+                                        <option value="Kassir">Kassir</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-slate-400 text-xs mb-1">Telefon</label>
+                                    <input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
+                                        placeholder="+998..." className="w-full bg-[#0f0c1e] border border-[#2d2556] text-white rounded-xl px-4 py-2.5 text-sm outline-none focus:border-violet-500 transition" />
+                                </div>
                             </div>
                             <div>
-                                <label className="block text-slate-400 text-xs mb-1">Telefon</label>
-                                <input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
-                                    placeholder="+998 90 000 00 00" className="w-full bg-[#0f0c1e] border border-[#2d2556] text-white rounded-xl px-4 py-2.5 text-sm outline-none focus:border-violet-500 transition" />
+                                <label className="block text-slate-400 text-xs mb-1">Gmail / Email</label>
+                                <input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+                                    placeholder="example@gmail.com" className="w-full bg-[#0f0c1e] border border-[#2d2556] text-white rounded-xl px-4 py-2.5 text-sm outline-none focus:border-violet-500 transition" />
+                            </div>
+                            <div>
+                                <label className="block text-slate-400 text-xs mb-1">Parol</label>
+                                <input type="password" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
+                                    placeholder="******" className="w-full bg-[#0f0c1e] border border-[#2d2556] text-white rounded-xl px-4 py-2.5 text-sm outline-none focus:border-violet-500 transition" />
                             </div>
                         </div>
                         <div className="flex gap-3 mt-6">
-                            <button onClick={() => setShowForm(false)} className="flex-1 py-2.5 rounded-xl bg-[#2d2556] text-slate-300 text-sm hover:bg-[#3d3470] transition cursor-pointer">Bekor</button>
-                            <button onClick={handleAdd} className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-sm font-semibold hover:from-violet-500 hover:to-indigo-500 transition shadow-lg shadow-violet-900/40 cursor-pointer">Saqlash</button>
+                            <button onClick={() => setShowForm(false)} className="flex-1 py-3 rounded-xl bg-[#2d2556] text-slate-300 text-sm hover:bg-[#3d3470] transition cursor-pointer">Bekor</button>
+                            <button onClick={handleAdd} className="flex-1 py-3 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-sm font-semibold hover:from-violet-500 hover:to-indigo-500 transition shadow-lg shadow-violet-900/40 cursor-pointer">Saqlash</button>
                         </div>
                     </div>
                 </div>
