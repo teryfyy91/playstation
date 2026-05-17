@@ -37,10 +37,17 @@ export default function Login({ onLogin }) {
             }, 1500)
         } else {
             const users = JSON.parse(localStorage.getItem('ps_registered_users') || '[]')
-            const user = users.find(u => u.username === form.username && u.password === form.password)
+            const staffMembers = JSON.parse(localStorage.getItem('ps_staff') || '[]')
 
-            if ((form.username === 'admin' && form.password === '1234') || user) {
-                onLogin()
+            const user = users.find(u => u.username === form.username && u.password === form.password)
+            const staff = staffMembers.find(s => s.email === form.username && s.password === form.password)
+
+            if ((form.username === 'admin' && form.password === '1234') || user || staff) {
+                const loggedUser = staff || user || { username: 'admin' }
+                setSuccess(`${loggedUser.name || loggedUser.username} xush kelibsiz!`)
+                setTimeout(() => {
+                    onLogin(loggedUser)
+                }, 1000)
             } else {
                 setError('Login yoki parol noto\'g\'ri!')
             }
@@ -97,7 +104,7 @@ export default function Login({ onLogin }) {
                                     type="text"
                                     value={form.username}
                                     onChange={e => setForm(f => ({ ...f, username: e.target.value }))}
-                                    placeholder="Username kiring"
+                                    placeholder="Username yoki Email kiring"
                                     className={inputCls}
                                     required
                                 />

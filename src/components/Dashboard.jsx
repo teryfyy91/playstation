@@ -345,10 +345,86 @@ function AddRoomModal({ onAdd, onClose }) {
     )
 }
 
+// ─── Receipt Modal ──────────────────────────────────────────────────────────
+function ReceiptModal({ receipt, onClose }) {
+    if (!receipt) return null
+
+    const roomOnlyTotal = Math.round(receipt.hours * receipt.roomPrice)
+
+    return (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 backdrop-blur-md p-4 animate-fadeIn">
+            <div className="bg-white text-[#0f0c1e] w-full max-w-[350px] rounded-[32px] p-8 shadow-2xl animate-scaleUp overflow-hidden relative border border-white/20">
+                <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-violet-600 via-indigo-600 to-violet-600"></div>
+
+                <div className="text-center mb-6">
+                    <div className="w-16 h-16 rounded-2xl bg-[#0f0c1e] flex items-center justify-center mx-auto mb-4 text-white">
+                        <Activity size={28} />
+                    </div>
+                    <h2 className="text-2xl font-black uppercase tracking-tighter mb-1">PS CLUB</h2>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] leading-none">To'lov Cheki</p>
+                </div>
+
+                <div className="border-y border-dashed border-slate-200 py-4 mb-4 space-y-1.5">
+                    <div className="flex justify-between text-xs">
+                        <span className="text-slate-400 font-bold uppercase tracking-widest">Xona</span>
+                        <span className="font-black text-[#0f0c1e]">{receipt.name}</span>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                        <span className="text-slate-400 font-bold uppercase tracking-widest">Sana</span>
+                        <span className="font-black text-[#0f0c1e]">{receipt.date}</span>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                        <span className="text-slate-400 font-bold uppercase tracking-widest">Vaqt</span>
+                        <span className="font-black text-[#0f0c1e]">{receipt.hours} soat</span>
+                    </div>
+                </div>
+
+                <div className="space-y-3 mb-8">
+                    <div className="flex justify-between text-sm items-center">
+                        <span className="font-bold text-slate-600">Xona xizmati:</span>
+                        <span className="font-black text-[#0f0c1e] font-mono">{formatMoney(roomOnlyTotal)}</span>
+                    </div>
+                    {receipt.products?.length > 0 && (
+                        <div className="pt-3 border-t border-slate-100">
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Mahsulotlar:</p>
+                            {receipt.products.map((p, i) => (
+                                <div key={i} className="flex justify-between text-sm py-0.5">
+                                    <span className="text-slate-600 font-medium">{p.name}</span>
+                                    <span className="font-bold text-[#0f0c1e] font-mono">{formatMoney(p.price)}</span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                <div className="bg-slate-50 -mx-8 px-8 py-5 mb-8 border-y border-slate-100">
+                    <div className="flex justify-between items-center">
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Jami To'lov</span>
+                        <span className="text-2xl font-black text-[#0f0c1e]">{formatMoney(receipt.totalPrice)}</span>
+                    </div>
+                </div>
+
+                <div className="text-center italic text-[10px] text-slate-400 mb-8 px-4">
+                    Tashrifingiz uchun rahmat! <br /> Bizni tanlaganingizdan xursandmiz.
+                </div>
+
+                <button
+                    onClick={onClose}
+                    className="w-full py-4 rounded-2xl bg-[#0f0c1e] text-white font-black text-xs uppercase tracking-[0.2em] hover:bg-black transition-all active:scale-95 shadow-xl shadow-black/10 cursor-pointer"
+                >
+                    Chekni Yopish
+                </button>
+            </div>
+        </div>
+    )
+}
+
+
 // ─── Dashboard ───────────────────────────────────────────────────────────────
 export default function Dashboard({ freeRooms, setFreeRooms, activeRooms, setActiveRooms }) {
     const [detailsRoom, setDetailsRoom] = useState(null)
     const [showAddRoom, setShowAddRoom] = useState(false)
+    const [showReceipt, setShowReceipt] = useState(null)
     const [history, setHistory] = useState(() => JSON.parse(localStorage.getItem('ps_detailed_history') || '[]'))
     const [activeTab, setActiveTab] = useState('free')
 
@@ -396,12 +472,15 @@ export default function Dashboard({ freeRooms, setFreeRooms, activeRooms, setAct
             date: now.toLocaleDateString(),
             totalPrice: total,
             hours: Number(hours.toFixed(2)),
-            products: stopped.orders || []
+            products: stopped.orders || [],
+            roomPrice: stopped.price // To'lov cheki uchun kerak
         }
 
         setHistory(prev => [entry, ...prev])
         setFreeRooms(prev => [...prev, { id: stopped.id, name: stopped.name, price: stopped.price, orders: [] }])
         setActiveRooms(prev => prev.filter(r => String(r.id) !== String(id)))
+
+        setShowReceipt(entry)
     }
 
     const handleAddProduct = (room, product) => {
@@ -425,6 +504,7 @@ export default function Dashboard({ freeRooms, setFreeRooms, activeRooms, setAct
     return (
         <div className="p-8 min-h-screen animate-fadeIn max-w-7xl mx-auto">
             {showAddRoom && <AddRoomModal onAdd={handleAddRoom} onClose={() => setShowAddRoom(false)} />}
+            {showReceipt && <ReceiptModal receipt={showReceipt} onClose={() => setShowReceipt(null)} />}
 
             {detailsRoom && (
                 <RoomDetailsModal

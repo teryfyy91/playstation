@@ -10,6 +10,8 @@ export default function Bar() {
     const [showForm, setShowForm] = useState(false)
     const [form, setForm] = useState({ name: '', buyPrice: '', price: '', stock: '' })
 
+    const [editingProduct, setEditingProduct] = useState(null)
+
     useEffect(() => {
         localStorage.setItem('ps_bar_products', JSON.stringify(products))
     }, [products])
@@ -18,21 +20,55 @@ export default function Bar() {
         p.name.toLowerCase().includes(search.toLowerCase())
     )
 
-    const handleAdd = () => {
+    const handleSave = () => {
         if (!form.name || !form.price || !form.buyPrice) return
-        setProducts(prev => [...prev, {
-            id: Date.now(),
-            name: form.name,
-            buyPrice: Number(form.buyPrice),
-            price: Number(form.price),
-            stock: Number(form.stock) || 0
-        }])
-        setForm({ name: '', buyPrice: '', price: '', stock: '' })
+
+        if (editingProduct) {
+            setProducts(prev => prev.map(p =>
+                p.id === editingProduct.id
+                    ? {
+                        ...p,
+                        name: form.name,
+                        buyPrice: Number(form.buyPrice),
+                        price: Number(form.price),
+                        stock: Number(form.stock)
+                    }
+                    : p
+            ))
+        } else {
+            setProducts(prev => [...prev, {
+                id: Date.now(),
+                name: form.name,
+                buyPrice: Number(form.buyPrice),
+                price: Number(form.price),
+                stock: Number(form.stock) || 0
+            }])
+        }
+
+        closeModal()
+    }
+
+    const openEditModal = (p) => {
+        setEditingProduct(p)
+        setForm({
+            name: p.name,
+            buyPrice: p.buyPrice,
+            price: p.price,
+            stock: p.stock
+        })
+        setShowForm(true)
+    }
+
+    const closeModal = () => {
         setShowForm(false)
+        setEditingProduct(null)
+        setForm({ name: '', buyPrice: '', price: '', stock: '' })
     }
 
     const deleteProduct = (id) => {
-        setProducts(prev => prev.filter(p => p.id !== id))
+        if (window.confirm('Haqiqatdan ham o\'chirmoqchimisiz?')) {
+            setProducts(prev => prev.filter(p => p.id !== id))
+        }
     }
 
     return (
@@ -43,7 +79,11 @@ export default function Bar() {
                     <p className="text-slate-500 text-sm mt-1">Mahsulotlar zaxirasi va foyda boshqaruvi</p>
                 </div>
                 <button
-                    onClick={() => setShowForm(true)}
+                    onClick={() => {
+                        setEditingProduct(null)
+                        setForm({ name: '', buyPrice: '', price: '', stock: '' })
+                        setShowForm(true)
+                    }}
                     className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-sm font-black uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition shadow-lg shadow-emerald-900/40 cursor-pointer"
                 >
                     <Plus size={18} /> Yangi mahsulot
@@ -90,10 +130,17 @@ export default function Bar() {
             {/* Products Grid */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 {filtered.map((p) => (
-                    <div key={p.id} className="group relative rounded-[32px] bg-[#1a1630] border border-[#2d2556] p-6 hover:border-emerald-500/40 transition-all duration-300">
+                    <div
+                        key={p.id}
+                        onClick={() => openEditModal(p)}
+                        className="group relative rounded-[32px] bg-[#1a1630] border border-[#2d2556] p-6 hover:border-emerald-500/40 transition-all duration-300 cursor-pointer"
+                    >
                         <button
-                            onClick={() => deleteProduct(p.id)}
-                            className="absolute top-4 right-4 text-slate-700 hover:text-red-500 transition opacity-0 group-hover:opacity-100 cursor-pointer"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                deleteProduct(p.id);
+                            }}
+                            className="absolute top-4 right-4 text-slate-700 hover:text-red-500 transition opacity-0 group-hover:opacity-100 cursor-pointer p-2 z-10"
                         >
                             <X size={18} />
                         </button>
@@ -139,8 +186,12 @@ export default function Bar() {
             {showForm && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-xl p-4">
                     <div className="bg-[#1a1630] border border-[#2d2556] rounded-[40px] p-10 w-full max-w-sm shadow-2xl animate-scaleUp">
-                        <h3 className="text-white font-black text-2xl mb-2 uppercase tracking-tighter">Yangi Mahsulot</h3>
-                        <p className="text-slate-500 text-sm mb-8">Skladga yangi narsa qo'shish</p>
+                        <h3 className="text-white font-black text-2xl mb-2 uppercase tracking-tighter">
+                            {editingProduct ? 'Mahsulotni Tahrirlash' : 'Yangi Mahsulot'}
+                        </h3>
+                        <p className="text-slate-500 text-sm mb-8">
+                            {editingProduct ? 'Mahsulot ma\'lumotlarini o\'zgartirish' : 'Skladga yangi narsa qo\'shish'}
+                        </p>
 
                         <div className="space-y-6 mb-10">
                             <div>
@@ -168,8 +219,10 @@ export default function Bar() {
                         </div>
 
                         <div className="flex gap-4">
-                            <button onClick={() => setShowForm(false)} className="flex-1 py-4 rounded-2xl bg-[#0f0c1e] border border-[#2d2556] text-slate-500 font-black text-xs uppercase tracking-[0.2em] hover:text-white transition cursor-pointer">Bekor</button>
-                            <button onClick={handleAdd} className="flex-[2] py-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-black text-xs uppercase tracking-[0.2em] shadow-lg shadow-emerald-900/40 hover:scale-[1.02] active:scale-95 transition cursor-pointer">Saqlash</button>
+                            <button onClick={closeModal} className="flex-1 py-4 rounded-2xl bg-[#0f0c1e] border border-[#2d2556] text-slate-500 font-black text-xs uppercase tracking-[0.2em] hover:text-white transition cursor-pointer">Bekor</button>
+                            <button onClick={handleSave} className="flex-[2] py-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-black text-xs uppercase tracking-[0.2em] shadow-lg shadow-emerald-900/40 hover:scale-[1.02] active:scale-95 transition cursor-pointer">
+                                {editingProduct ? 'Saqlash' : 'Qo\'shish'}
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -177,3 +230,4 @@ export default function Bar() {
         </div>
     )
 }
+

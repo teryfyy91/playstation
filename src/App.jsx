@@ -18,9 +18,8 @@ const getSaved = (key, def) => {
 }
 
 export default function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(() => {
-    return localStorage.getItem('ps_isLoggedIn') === 'true'
-  })
+  const [currentUser, setCurrentUser] = useState(() => getSaved('ps_user', null))
+  const [isLoggedIn, setIsLoggedIn] = useState(() => !!localStorage.getItem('ps_user'))
   const [activePage, setActivePage] = useState('dashboard')
 
   // Xonalar holati
@@ -36,14 +35,16 @@ export default function App() {
     localStorage.setItem('activeRooms', JSON.stringify(activeRooms))
   }, [activeRooms])
 
-  const handleLogin = () => {
+  const handleLogin = (user) => {
+    setCurrentUser(user)
     setIsLoggedIn(true)
-    localStorage.setItem('ps_isLoggedIn', 'true')
+    localStorage.setItem('ps_user', JSON.stringify(user))
   }
 
   const handleLogout = () => {
+    setCurrentUser(null)
     setIsLoggedIn(false)
-    localStorage.removeItem('ps_isLoggedIn')
+    localStorage.removeItem('ps_user')
   }
 
   const renderPage = () => {
@@ -82,7 +83,7 @@ export default function App() {
 
   return (
     <div className="flex h-screen bg-[#0f0c1e] overflow-hidden">
-      <Sidebar activePage={activePage} setActivePage={setActivePage} onLogout={handleLogout} />
+      <Sidebar activePage={activePage} setActivePage={setActivePage} onLogout={handleLogout} user={currentUser} />
       <main className="flex-1 overflow-y-auto">
         {renderPage()}
       </main>
