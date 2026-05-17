@@ -213,24 +213,24 @@ function ActiveRoomCard({ room, onStop, onAddOrder, onOpenDetails }) {
             onClick={(e) => {
                 if (e.target.tagName !== 'BUTTON' && !e.target.closest('button')) onOpenDetails(room)
             }}
-            className={`relative rounded-3xl p-5 border transition-all duration-300 group cursor-pointer shadow-xl
+            className={`relative rounded-[24px] p-4 border transition-all duration-300 group cursor-pointer shadow-xl
                 ${isOverdue ? 'bg-red-950/40 border-red-500' : isWarning ? 'bg-amber-950/30 border-amber-500/60' : 'bg-[#1a1630] border-[#2d2556] hover:border-violet-500/40'}`}
         >
-            <div className="flex items-start justify-between mb-4">
+            <div className="flex items-start justify-between mb-3">
                 <div className="min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                        <div className="w-8 h-8 rounded-xl bg-violet-900/30 flex items-center justify-center text-violet-400">
-                            <Tv size={16} />
+                        <div className="w-7 h-7 rounded-lg bg-violet-900/30 flex items-center justify-center text-violet-400">
+                            <Tv size={14} />
                         </div>
-                        <span className="text-white font-black text-base truncate tracking-tighter">{room.name}</span>
+                        <span className="text-white font-black text-sm truncate tracking-tighter">{room.name}</span>
                     </div>
-                    <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">{room.client} · {formatMoney(room.price)}/soat</p>
+                    <p className="text-slate-500 text-[9px] font-bold uppercase tracking-widest">{room.client} · {formatMoney(room.price)}/s</p>
                 </div>
                 <div className="text-right">
-                    <p className={`text-2xl font-mono font-black tracking-tighter ${isOverdue ? 'text-red-400 animate-pulse' : 'text-emerald-400'}`}>
+                    <p className={`text-lg font-mono font-black tracking-tighter ${isOverdue ? 'text-red-400 animate-pulse' : 'text-emerald-400'}`}>
                         {displayTime}
                     </p>
-                    <p className="text-sm font-black text-white/90 font-mono">
+                    <p className="text-xs font-black text-white/90 font-mono">
                         {formatMoney(Math.round(earnedMoney))}
                     </p>
                 </div>
@@ -239,13 +239,13 @@ function ActiveRoomCard({ room, onStop, onAddOrder, onOpenDetails }) {
             <div className="flex gap-2">
                 <button
                     onClick={(e) => { e.stopPropagation(); onAddOrder(room) }}
-                    className="p-3 rounded-2xl bg-[#0f0c1e] border border-[#2d2556] text-slate-400 hover:text-white hover:border-violet-500 transition cursor-pointer"
+                    className="p-2.5 rounded-xl bg-[#0f0c1e] border border-[#2d2556] text-slate-400 hover:text-white hover:border-violet-500 transition cursor-pointer"
                 >
-                    <Plus size={18} />
+                    <Plus size={16} />
                 </button>
                 <button
                     onClick={(e) => { e.stopPropagation(); onStop(room.id) }}
-                    className="flex-1 py-3 rounded-2xl bg-red-600/10 border border-red-600/20 text-red-500 hover:bg-red-600 hover:text-white text-xs font-black uppercase tracking-widest transition duration-300 shadow-lg shadow-red-900/20 cursor-pointer"
+                    className="flex-1 py-2.5 rounded-xl bg-red-600/10 border border-red-600/20 text-red-500 hover:bg-red-600 hover:text-white text-[10px] font-black uppercase tracking-widest transition duration-300 shadow-lg shadow-red-900/20 cursor-pointer"
                 >
                     Tugatish
                 </button>
@@ -259,35 +259,35 @@ function FreeRoomCard({ room, onStart, onDelete, onOpenDetails }) {
     return (
         <div
             onClick={() => onOpenDetails(room)}
-            className="rounded-3xl p-6 bg-[#1a1630] border border-[#2d2556] hover:border-emerald-500/50 transition-all duration-300 group cursor-pointer shadow-lg"
+            className="rounded-[24px] p-4 bg-[#1a1630] border border-[#2d2556] hover:border-emerald-500/50 transition-all duration-300 group cursor-pointer shadow-lg"
         >
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-2xl bg-[#0f0c1e] border border-[#2d2556] flex items-center justify-center text-slate-500 group-hover:text-emerald-400 group-hover:border-emerald-500/30 transition-all">
-                        <DoorOpen size={20} />
+                    <div className="w-8 h-8 rounded-lg bg-[#0f0c1e] border border-[#2d2556] flex items-center justify-center text-slate-500 group-hover:text-emerald-400 group-hover:border-emerald-500/30 transition-all">
+                        <DoorOpen size={16} />
                     </div>
                     <div>
-                        <h4 className="text-white font-black text-lg tracking-tighter">{room.name}</h4>
-                        <p className="text-emerald-500/70 text-[10px] font-bold uppercase tracking-widest">Bo'sh</p>
+                        <h4 className="text-white font-black text-base tracking-tighter">{room.name}</h4>
+                        <p className="text-emerald-500/70 text-[9px] font-bold uppercase tracking-widest">Bo'sh</p>
                     </div>
                 </div>
-                <button onClick={(e) => { e.stopPropagation(); onDelete(room.id) }} className="w-8 h-8 rounded-full flex items-center justify-center text-slate-600 hover:text-red-400 transition cursor-pointer">
-                    <X size={16} />
+                <button onClick={(e) => { e.stopPropagation(); onDelete(room.id) }} className="w-7 h-7 rounded-full flex items-center justify-center text-slate-600 hover:text-red-400 transition cursor-pointer">
+                    <X size={14} />
                 </button>
             </div>
 
-            <div className="flex items-center justify-between mb-5 px-1">
-                <div className="flex items-center gap-1.5 text-slate-400 text-xs font-bold">
-                    <Users size={14} /> {room.capacity}
+            <div className="flex items-center justify-between mb-3 px-1">
+                <div className="flex items-center gap-1.5 text-slate-400 text-[10px] font-bold">
+                    <Users size={12} /> {room.capacity}
                 </div>
-                <div className="text-white font-black text-sm">{formatMoney(room.price)}</div>
+                <div className="text-white font-black text-xs">{formatMoney(room.price)}</div>
             </div>
 
             <button
                 onClick={(e) => { e.stopPropagation(); onStart(room) }}
-                className="w-full py-4 rounded-[20px] bg-[#0f0c1e] border border-[#2d2556] hover:bg-emerald-600 hover:text-white hover:border-emerald-500 text-emerald-500 text-xs font-black uppercase tracking-[0.2em] transition-all transform active:scale-95 flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-black/40"
+                className="w-full py-2.5 rounded-xl bg-[#0f0c1e] border border-[#2d2556] hover:bg-emerald-600 hover:text-white hover:border-emerald-500 text-emerald-500 text-[10px] font-black uppercase tracking-[0.2em] transition-all transform active:scale-95 flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-black/40"
             >
-                <Play size={14} /> Start
+                <Play size={12} /> Start
             </button>
         </div>
     )
@@ -419,12 +419,45 @@ function ReceiptModal({ receipt, onClose }) {
     )
 }
 
+// ─── Delete Confirm Modal ───────────────────────────────────────────────────
+function DeleteConfirmModal({ onConfirm, onCancel }) {
+    return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fadeIn">
+            <div className="bg-[#1a1630] border border-red-500/30 rounded-[40px] p-10 w-full max-w-sm shadow-2xl animate-scaleUp text-center">
+                <div className="w-20 h-20 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-6 text-red-500">
+                    <AlertTriangle size={40} />
+                </div>
+                <h3 className="text-white font-black text-2xl mb-2 uppercase tracking-tighter">Olib Tashlash?</h3>
+                <p className="text-slate-500 text-sm mb-10 px-4 leading-relaxed">
+                    Ushbu xonani ro'yxatdan butunlay o'chirib tashlamoqchimisiz? Ushbu amalni ortga qaytarib bo'lmaydi.
+                </p>
+                <div className="flex gap-4">
+                    <button
+                        onClick={onCancel}
+                        className="flex-1 py-4 rounded-2xl bg-[#0f0c1e] border border-[#2d2556] text-slate-500 font-black text-xs uppercase tracking-[0.2em] hover:text-white transition cursor-pointer"
+                    >
+                        Bekor
+                    </button>
+                    <button
+                        onClick={onConfirm}
+                        className="flex-[2] py-4 rounded-2xl bg-gradient-to-r from-red-600 to-rose-600 text-white font-black text-xs uppercase tracking-[0.2em] shadow-lg shadow-red-900/40 hover:scale-[1.02] active:scale-95 transition cursor-pointer"
+                    >
+                        O'chirish
+                    </button>
+                </div>
+            </div>
+        </div>
+    )
+}
+
+
 
 // ─── Dashboard ───────────────────────────────────────────────────────────────
 export default function Dashboard({ freeRooms, setFreeRooms, activeRooms, setActiveRooms }) {
     const [detailsRoom, setDetailsRoom] = useState(null)
     const [showAddRoom, setShowAddRoom] = useState(false)
     const [showReceipt, setShowReceipt] = useState(null)
+    const [deleteRoomId, setDeleteRoomId] = useState(null)
     const [history, setHistory] = useState(() => JSON.parse(localStorage.getItem('ps_detailed_history') || '[]'))
     const [activeTab, setActiveTab] = useState('free')
 
@@ -439,7 +472,14 @@ export default function Dashboard({ freeRooms, setFreeRooms, activeRooms, setAct
     }
 
     const handleDeleteRoom = (id) => {
-        setFreeRooms(prev => prev.filter(r => String(r.id) !== String(id)))
+        setDeleteRoomId(id)
+    }
+
+    const confirmDelete = () => {
+        if (deleteRoomId) {
+            setFreeRooms(prev => prev.filter(r => String(r.id) !== String(deleteRoomId)))
+            setDeleteRoomId(null)
+        }
     }
 
     const handleStart = (room) => {
@@ -505,6 +545,7 @@ export default function Dashboard({ freeRooms, setFreeRooms, activeRooms, setAct
         <div className="p-8 min-h-screen animate-fadeIn max-w-7xl mx-auto">
             {showAddRoom && <AddRoomModal onAdd={handleAddRoom} onClose={() => setShowAddRoom(false)} />}
             {showReceipt && <ReceiptModal receipt={showReceipt} onClose={() => setShowReceipt(null)} />}
+            {deleteRoomId && <DeleteConfirmModal onConfirm={confirmDelete} onCancel={() => setDeleteRoomId(null)} />}
 
             {detailsRoom && (
                 <RoomDetailsModal
@@ -566,7 +607,7 @@ export default function Dashboard({ freeRooms, setFreeRooms, activeRooms, setAct
             </div>
 
             {activeTab === 'free' ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-slideUp">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 animate-slideUp">
                     {freeRooms.length === 0 ? (
                         <div className="col-span-full py-32 text-center bg-[#1a1630]/40 border-2 border-dashed border-[#2d2556] rounded-[60px]">
                             <DoorOpen size={60} className="mx-auto text-slate-800 mb-6" />
@@ -579,7 +620,7 @@ export default function Dashboard({ freeRooms, setFreeRooms, activeRooms, setAct
                     )}
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto animate-slideUp">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-slideUp">
                     {activeRooms.length === 0 ? (
                         <div className="col-span-full py-32 text-center bg-[#1a1630]/40 border-2 border-dashed border-[#2d2556] rounded-[60px]">
                             <Activity size={60} className="mx-auto text-slate-800 mb-6" />
