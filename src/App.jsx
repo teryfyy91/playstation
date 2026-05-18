@@ -11,6 +11,8 @@ import Bar from './components/Bar'
 import Login from './components/Login'
 import './index.css'
 
+import { supabase } from './lib/supabase'
+
 // ─── Initial Logic for Persistence ───────────────────────────────────────────
 const getSaved = (key, def) => {
   const saved = localStorage.getItem(key)
@@ -23,14 +25,27 @@ export default function App() {
   const [activePage, setActivePage] = useState('dashboard')
 
   // Xonalar holati
-  const [freeRooms, setFreeRooms] = useState(() => getSaved('freeRooms', []))
+  const [freeRooms, setFreeRooms] = useState([])
   const [activeRooms, setActiveRooms] = useState(() => getSaved('activeRooms', []))
 
-  // Har safar o'zgarganda saqlab borish
+  // Supabase dan xonalarni olish
   useEffect(() => {
-    localStorage.setItem('freeRooms', JSON.stringify(freeRooms))
-  }, [freeRooms])
+    const fetchRooms = async () => {
+      const { data, error } = await supabase
+        .from('rooms')
+        .select('*')
 
+      if (!error && data) {
+        // Faqat bo'sh xonalarni (localStorage dagi active larda yo'qlarini) freeRooms ga yuklaymiz
+        const activeIds = activeRooms.map(r => String(r.id))
+        const free = data.filter(r => !activeIds.includes(String(r.id)))
+        setFreeRooms(free)
+      }
+    }
+    fetchRooms()
+  }, [])
+
+  // Har safar o'zgarganda saqlab borish (ActiveRooms hali localda qolishi mumkin yoki uni ham sync qilish kerak)
   useEffect(() => {
     localStorage.setItem('activeRooms', JSON.stringify(activeRooms))
   }, [activeRooms])

@@ -1,14 +1,18 @@
 import { useState, useEffect } from 'react'
 import {
     Clock, AlertTriangle, Play, DoorOpen, Tv, Users,
-    Activity, Plus, X, Settings2
+    Activity, Plus, X, Settings2, Search, Package, DollarSign
 } from 'lucide-react'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 function formatTime(seconds) {
     const abs = Math.abs(seconds)
-    const m = Math.floor(abs / 60)
+    const h = Math.floor(abs / 3600)
+    const m = Math.floor((abs % 3600) / 60)
     const s = abs % 60
+    if (h > 0) {
+        return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+    }
     return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
 }
 
@@ -26,21 +30,53 @@ function useCountdown(initialSeconds) {
     return timeLeft
 }
 
+// ─── Live Session Stats ──────────────────────────────────────────────────────
+function LiveSessionStats({ room }) {
+    const elapsedSeconds = useStopwatch(room.startTimeActual)
+    const productTotal = (room.orders || []).reduce((sum, p) => sum + (Number(p.price) || 0), 0)
+    const hoursElapsed = elapsedSeconds / 3600
+    const earnedMoney = (Number(room.price) * hoursElapsed) + productTotal
+
+    return (
+        <div className="flex flex-col">
+            <p className="text-emerald-400 text-lg font-mono font-black tracking-tighter">
+                {formatTime(elapsedSeconds)} · {formatMoney(Math.round(earnedMoney))}
+            </p>
+            <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-0.5">
+                Tarif: {formatMoney(room.price)}/s
+            </p>
+        </div>
+    )
+}
+
 // ─── Room Details Modal (Room Control Center) ───────────────────────────────
-function RoomDetailsModal({ room, history, onClose, onAddOrder, isActive }) {
-    const today = new Date().toLocaleDateString()
-    const roomHistory = history.filter(h => h.roomId === room.id && h.date === today)
+function RoomDetailsModal({ room, history, onClose, onAddOrder, isActive, onStop, barProducts }) {
+    const now = new Date()
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
 
-    const totalEarnings = roomHistory.reduce((sum, h) => sum + h.totalPrice, 0)
-    const totalHours = roomHistory.reduce((sum, h) => sum + h.hours, 0)
+    const roomHistory = history.filter(h => {
+        const hId = String(h.roomId || h.room_id || '').trim()
+        const rId = String(room.id || '').trim()
 
-    // Sklad mahsulotlari
-    const barProducts = JSON.parse(localStorage.getItem('ps_bar_products') || '[]')
+        const hName = String(h.name || '').toLowerCase().trim()
+        const rName = String(room.name || '').toLowerCase().trim()
+
+        const idMatch = rId && hId === rId
+        const nameMatch = rName && hName === rName
+        const dateMatch = h.date === today
+
+        return (idMatch || nameMatch) && dateMatch
+    })
+
+    const totalEarnings = roomHistory.reduce((sum, h) => sum + (Number(h.totalPrice || h.total_price || 0)), 0)
+    const totalHours = roomHistory.reduce((sum, h) => sum + (Number(h.hours || 0)), 0)
+
+    // Sklad mahsulotlari (Passed as prop)
     const [showSklad, setShowSklad] = useState(false)
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-xl p-4">
-            <div className="bg-[#1a1630] border border-[#2d2556] rounded-[40px] w-full max-w-5xl shadow-2xl overflow-hidden animate-scaleUp flex flex-col md:flex-row h-[85vh]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-xl">
+            <div className="bg-[#1a1630] border-none w-full h-full shadow-2xl overflow-hidden animate-scaleUp flex flex-col md:flex-row">
 
                 {/* LEFT SIDE: STATISTICS & HISTORY */}
                 <div className="flex-1 p-8 border-r border-[#2d2556] overflow-y-auto custom-scrollbar">
@@ -91,7 +127,11 @@ function RoomDetailsModal({ room, history, onClose, onAddOrder, isActive }) {
                                     </div>
                                     <div className="text-right">
                                         <p className="text-emerald-400 font-black">{formatMoney(h.totalPrice)}</p>
-                                        {h.products?.length > 0 && <p className="text-slate-600 text-[10px] uppercase font-bold">{h.products.length} ta mahsulot</p>}
+                                        {h.products?.length > 0 && (
+                                            <p className="text-slate-600 text-[10px] uppercase font-bold">
+                                                {h.products.length} ta mahsulot: {h.products.map(p => p.name).join(', ')}
+                                            </p>
+                                        )}
                                     </div>
                                 </div>
                             ))
@@ -103,8 +143,12 @@ function RoomDetailsModal({ room, history, onClose, onAddOrder, isActive }) {
                 <div className="w-full md:w-[400px] bg-[#0f0c1e]/50 p-8 flex flex-col">
                     <div className="flex justify-between items-start mb-8">
                         <div>
-                            <h4 className="text-white font-black text-lg uppercase tracking-tighter">Olingan Narsalar</h4>
-                            <p className="text-slate-500 text-xs font-bold">Joriy seans hisoboti</p>
+                            <h4 className="text-white font-black text-lg uppercase tracking-tighter">Joriy Seans</h4>
+                            {isActive ? (
+                                <LiveSessionStats room={room} />
+                            ) : (
+                                <p className="text-slate-500 text-xs font-bold">Hech qanday seans yo'q</p>
+                            )}
                         </div>
                         <button onClick={onClose} className="w-10 h-10 rounded-full bg-[#1a1630] border border-[#2d2556] text-slate-400 hover:text-white flex items-center justify-center transition cursor-pointer">
                             <X size={20} />
@@ -140,12 +184,21 @@ function RoomDetailsModal({ room, history, onClose, onAddOrder, isActive }) {
 
                             <div className="relative">
                                 {!showSklad ? (
-                                    <button
-                                        onClick={() => setShowSklad(true)}
-                                        className="w-full py-5 rounded-[24px] bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-black text-xs uppercase tracking-[0.2em] shadow-lg shadow-violet-900/40 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 cursor-pointer"
-                                    >
-                                        <Plus size={18} /> Mahsulot qo'shish
-                                    </button>
+                                    <div className="space-y-3">
+                                        <button
+                                            onClick={() => setShowSklad(true)}
+                                            className="w-full py-5 rounded-[24px] bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-black text-xs uppercase tracking-[0.2em] shadow-lg shadow-violet-900/40 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 cursor-pointer"
+                                        >
+                                            <Plus size={18} /> Mahsulot qo'shish
+                                        </button>
+
+                                        <button
+                                            onClick={() => { onStop(room.id); onClose(); }}
+                                            className="w-full py-5 rounded-[24px] bg-red-600/10 border border-red-600/20 text-red-500 hover:bg-red-600 hover:text-white font-black text-xs uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 cursor-pointer"
+                                        >
+                                            <Activity size={18} /> Seansni Tugatish
+                                        </button>
+                                    </div>
                                 ) : (
                                     <div className="bg-[#1a1630] rounded-[32px] p-6 border border-violet-500/50 shadow-2xl animate-slideUp">
                                         <div className="flex justify-between items-center mb-4">
@@ -173,6 +226,78 @@ function RoomDetailsModal({ room, history, onClose, onAddOrder, isActive }) {
                             </div>
                         </>
                     )}
+                </div>
+            </div>
+        </div>
+    )
+}
+
+// ─── Quick Product Add Modal ─────────────────────────────────────────────────
+function QuickProductAddModal({ room, onClose, onAddProduct, products }) {
+    const [search, setSearch] = useState('')
+
+    const filtered = products.filter(p => p.name.toLowerCase().includes(search.toLowerCase()))
+
+    return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-xl animate-fadeIn">
+            <div className="bg-[#1a1630] w-full h-full shadow-2xl overflow-hidden animate-scaleUp flex flex-col">
+                <div className="p-8 border-b border-[#2d2556] flex justify-between items-center bg-[#1a1630]">
+                    <div>
+                        <h3 className="text-white font-black text-3xl uppercase tracking-tighter">Mahsulot Qo'shish</h3>
+                        <p className="text-slate-500 text-sm font-bold uppercase tracking-widest mt-1">Xona: {room.name}</p>
+                    </div>
+                    <button onClick={onClose} className="w-14 h-14 rounded-full bg-[#0f0c1e] border border-[#2d2556] text-slate-400 hover:text-white flex items-center justify-center transition cursor-pointer">
+                        <X size={28} />
+                    </button>
+                </div>
+
+                <div className="p-8 md:p-12 bg-[#0f0c1e]/30 flex-1 overflow-hidden flex flex-col">
+                    <div className="max-w-5xl mx-auto w-full mb-10">
+                        <div className="relative">
+                            <Search size={28} className="absolute left-8 top-1/2 -translate-y-1/2 text-slate-500" />
+                            <input
+                                autoFocus
+                                value={search}
+                                onChange={e => setSearch(e.target.value)}
+                                placeholder="Mahsulot nomini yozing..."
+                                className="w-full bg-[#0f0c1e] border border-[#2d2556] text-white rounded-full pl-22 pr-10 py-7 text-2xl font-black outline-none focus:border-violet-500 transition shadow-2xl placeholder:text-slate-700"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-6 overflow-y-auto pr-4 pb-12 custom-scrollbar">
+                        {filtered.map(p => (
+                            <button
+                                key={p.id}
+                                onClick={() => { onAddProduct(room, p); onClose(); }}
+                                className="group p-5 rounded-[28px] bg-[#1a1630] border border-[#2d2556] hover:border-violet-500 hover:bg-violet-600/5 transition-all text-left flex flex-col min-h-[170px] cursor-pointer relative overflow-hidden shadow-lg hover:shadow-violet-900/40"
+                            >
+                                <div className="absolute top-[-20%] right-[-10%] w-32 h-32 bg-violet-600/5 blur-3xl rounded-full group-hover:bg-violet-600/10 transition" />
+
+                                <div className="relative z-10 flex-1">
+                                    <div className="w-11 h-11 rounded-xl bg-[#0f0c1e] border border-[#2d2556] flex items-center justify-center mb-3 text-slate-500 group-hover:text-violet-400 transition shadow-inner">
+                                        <Package size={22} />
+                                    </div>
+                                    <div className="text-white font-black text-lg truncate pr-2 group-hover:text-violet-400 transition leading-tight">{p.name}</div>
+                                    <div className="text-slate-500 text-[10px] uppercase font-bold tracking-widest mt-1">{p.stock} ta qoldi</div>
+                                </div>
+
+                                <div className="flex items-center justify-between pt-4 mt-2 relative z-10">
+                                    <div className="text-emerald-400 font-black font-mono text-base">{formatMoney(p.price)}</div>
+                                    <div className="bg-violet-600/20 text-violet-400 p-2 rounded-xl group-hover:bg-violet-600 group-hover:text-white transition shadow-lg">
+                                        <Plus size={20} />
+                                    </div>
+                                </div>
+                            </button>
+                        ))}
+                        {filtered.length === 0 && (
+                            <div className="col-span-full py-32 text-center">
+                                <Package size={64} className="mx-auto text-slate-800 mb-6" />
+                                <h4 className="text-slate-600 text-xl font-bold">Mahsulot topilmadi</h4>
+                                <p className="text-slate-700 mt-2">Boshqa nom bilan qidirib ko'ring yoki skladni tekshiring</p>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>
@@ -299,8 +424,8 @@ function AddRoomModal({ onAdd, onClose }) {
     const inputCls = "w-full bg-[#0f0c1e] border border-[#2d2556] text-white rounded-xl px-4 py-2.5 text-sm outline-none focus:border-violet-500 transition"
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-            <div className="bg-[#1a1630] border border-[#2d2556] rounded-[32px] p-8 w-full max-w-sm shadow-2xl animate-scaleUp">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 overflow-y-auto">
+            <div className="bg-[#1a1630] border border-[#2d2556] rounded-[32px] p-8 w-full max-w-sm shadow-2xl animate-scaleUp my-auto">
                 <h3 className="text-white font-black text-xl mb-1 uppercase tracking-wider text-center">Yangi Xona</h3>
                 <p className="text-slate-500 text-xs mb-8 text-center uppercase tracking-widest">Klub uchun yangi joy qo'shish</p>
 
@@ -352,8 +477,8 @@ function ReceiptModal({ receipt, onClose }) {
     const roomOnlyTotal = Math.round(receipt.hours * receipt.roomPrice)
 
     return (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 backdrop-blur-md p-4 animate-fadeIn">
-            <div className="bg-white text-[#0f0c1e] w-full max-w-[350px] rounded-[32px] p-8 shadow-2xl animate-scaleUp overflow-hidden relative border border-white/20">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 backdrop-blur-md p-4 animate-fadeIn overflow-y-auto">
+            <div className="bg-white text-[#0f0c1e] w-full max-w-[350px] rounded-[32px] p-8 shadow-2xl animate-scaleUp relative border border-white/20 my-auto text-left">
                 <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-violet-600 via-indigo-600 to-violet-600"></div>
 
                 <div className="text-center mb-6">
@@ -419,30 +544,109 @@ function ReceiptModal({ receipt, onClose }) {
     )
 }
 
-// ─── Delete Confirm Modal ───────────────────────────────────────────────────
+// ─── Delete Confirmation Modal ────────────────────────────────────────────────
 function DeleteConfirmModal({ onConfirm, onCancel }) {
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fadeIn">
-            <div className="bg-[#1a1630] border border-red-500/30 rounded-[40px] p-10 w-full max-w-sm shadow-2xl animate-scaleUp text-center">
-                <div className="w-20 h-20 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-6 text-red-500">
-                    <AlertTriangle size={40} />
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto">
+            <div className="bg-[#1a1630] border border-[#2d2556] rounded-[32px] p-8 w-full max-w-sm shadow-2xl animate-scaleUp text-center my-auto">
+                <div className="w-16 h-16 rounded-2xl bg-red-600/10 flex items-center justify-center mx-auto mb-6 text-red-500">
+                    <AlertTriangle size={32} />
                 </div>
-                <h3 className="text-white font-black text-2xl mb-2 uppercase tracking-tighter">Olib Tashlash?</h3>
-                <p className="text-slate-500 text-sm mb-10 px-4 leading-relaxed">
-                    Ushbu xonani ro'yxatdan butunlay o'chirib tashlamoqchimisiz? Ushbu amalni ortga qaytarib bo'lmaydi.
-                </p>
+                <h3 className="text-white font-black text-xl mb-2 uppercase tracking-tight">O'chirishni Tasdiqlash</h3>
+                <p className="text-slate-400 text-sm mb-8">Haqiqatan ham ushbu xonani o'chirmoqchimisiz? Bu amalni orqaga qaytarib bo'lmaydi.</p>
+                <div className="flex gap-3">
+                    <button onClick={onCancel} className="flex-1 py-4 rounded-2xl bg-[#0f0c1e] border border-[#2d2556] text-slate-500 font-bold text-xs uppercase tracking-widest hover:text-white transition cursor-pointer">Bekor Qilish</button>
+                    <button onClick={onConfirm} className="flex-1 py-4 rounded-2xl bg-red-600 text-white font-black text-xs uppercase tracking-widest shadow-lg shadow-red-900/40 hover:bg-red-500 transition cursor-pointer">Ha, O'chirish</button>
+                </div>
+            </div>
+        </div>
+    )
+}
+
+// ─── Payment Modal ────────────────────────────────────────────────────────────
+function PaymentModal({ entry, onConfirm, onCancel }) {
+    const [cash, setCash] = useState(entry.totalPrice)
+    const [card, setCard] = useState(0)
+
+    const handleCashChange = (val) => {
+        const n = Number(val) || 0
+        setCash(n)
+        setCard(Math.max(0, entry.totalPrice - n))
+    }
+
+    const handleCardChange = (val) => {
+        const n = Number(val) || 0
+        setCard(n)
+        setCash(Math.max(0, entry.totalPrice - n))
+    }
+
+    return (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/90 backdrop-blur-xl p-4 animate-fadeIn overflow-y-auto">
+            <div className="bg-[#1a1630] border border-[#2d2556] rounded-[48px] p-6 md:p-10 w-full max-w-md shadow-2xl animate-scaleUp overflow-hidden relative my-auto">
+                <div className="absolute top-0 right-0 w-40 h-40 bg-violet-600/10 blur-3xl rounded-full -mr-20 -mt-20"></div>
+
+                <div className="text-center mb-6">
+                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-700 flex items-center justify-center mx-auto mb-4 shadow-xl shadow-violet-900/40">
+                        <Wallet size={32} className="text-white" />
+                    </div>
+                    <h3 className="text-white font-black text-2xl uppercase tracking-tighter mb-1">To'lovni Qabul Qilish</h3>
+                    <p className="text-slate-500 text-[10px] font-bold uppercase tracking-[0.2em]">{entry.name} · {entry.client}</p>
+                </div>
+
+                <div className="bg-[#0f0c1e] rounded-[32px] border border-[#2d2556] p-5 mb-6">
+                    <div className="flex justify-between items-center mb-3 pb-3 border-b border-[#2d2556]">
+                        <span className="text-slate-500 text-[9px] font-black uppercase tracking-widest">Sarflangan Vaqt</span>
+                        <span className="text-white font-black text-sm">{entry.formattedTime}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                        <span className="text-slate-500 text-[9px] font-black uppercase tracking-widest">Umumiy Summa</span>
+                        <span className="text-emerald-400 text-xl font-black">{formatMoney(entry.totalPrice)}</span>
+                    </div>
+                </div>
+
+                <div className="space-y-4 mb-8">
+                    <div>
+                        <label className="block text-slate-500 text-[9px] font-black uppercase tracking-[0.2em] mb-2 ml-1">Naqd To'lov (So'm)</label>
+                        <div className="relative">
+                            <input
+                                type="number"
+                                value={cash}
+                                onChange={e => handleCashChange(e.target.value)}
+                                className="w-full bg-[#0f0c1e] border border-[#2d2556] text-white rounded-2xl px-5 py-3.5 text-lg font-black outline-none focus:border-emerald-500 transition shadow-inner"
+                            />
+                            <div className="absolute right-5 top-1/2 -translate-y-1/2 text-emerald-500/30">
+                                <DollarSign size={18} />
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <label className="block text-slate-500 text-[9px] font-black uppercase tracking-[0.2em] mb-2 ml-1">Karta Orqali (So'm)</label>
+                        <div className="relative">
+                            <input
+                                type="number"
+                                value={card}
+                                onChange={e => handleCardChange(e.target.value)}
+                                className="w-full bg-[#0f0c1e] border border-[#2d2556] text-white rounded-2xl px-5 py-3.5 text-lg font-black outline-none focus:border-blue-500 transition shadow-inner"
+                            />
+                            <div className="absolute right-5 top-1/2 -translate-y-1/2 text-blue-500/30">
+                                <CreditCard size={18} />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div className="flex gap-4">
                     <button
                         onClick={onCancel}
-                        className="flex-1 py-4 rounded-2xl bg-[#0f0c1e] border border-[#2d2556] text-slate-500 font-black text-xs uppercase tracking-[0.2em] hover:text-white transition cursor-pointer"
+                        className="flex-1 py-5 rounded-[24px] bg-[#0f0c1e] border border-[#2d2556] text-slate-500 font-black text-[10px] uppercase tracking-widest hover:text-white transition cursor-pointer"
                     >
-                        Bekor
+                        Bekor Qilish
                     </button>
                     <button
-                        onClick={onConfirm}
-                        className="flex-[2] py-4 rounded-2xl bg-gradient-to-r from-red-600 to-rose-600 text-white font-black text-xs uppercase tracking-[0.2em] shadow-lg shadow-red-900/40 hover:scale-[1.02] active:scale-95 transition cursor-pointer"
+                        onClick={() => onConfirm(cash, card)}
+                        className="flex-[2] py-5 rounded-[24px] bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-black text-[10px] uppercase tracking-[0.2em] shadow-lg shadow-emerald-900/40 hover:scale-[1.02] active:scale-95 transition cursor-pointer"
                     >
-                        O'chirish
+                        To'lovni Yakunlash
                     </button>
                 </div>
             </div>
@@ -452,6 +656,9 @@ function DeleteConfirmModal({ onConfirm, onCancel }) {
 
 
 
+import { supabase } from '../lib/supabase'
+import { Wallet, CreditCard } from 'lucide-react'
+
 // ─── Dashboard ───────────────────────────────────────────────────────────────
 export default function Dashboard({ freeRooms, setFreeRooms, activeRooms, setActiveRooms }) {
     const [detailsRoom, setDetailsRoom] = useState(null)
@@ -460,25 +667,67 @@ export default function Dashboard({ freeRooms, setFreeRooms, activeRooms, setAct
     const [deleteRoomId, setDeleteRoomId] = useState(null)
     const [history, setHistory] = useState(() => JSON.parse(localStorage.getItem('ps_detailed_history') || '[]'))
     const [activeTab, setActiveTab] = useState('free')
+    const [quickProductRoom, setQuickProductRoom] = useState(null)
+    const [barProducts, setBarProducts] = useState([])
+    const [paymentEntry, setPaymentEntry] = useState(null)
 
     useEffect(() => {
         localStorage.setItem('ps_detailed_history', JSON.stringify(history))
     }, [history])
 
-    const handleAddRoom = (room) => {
+    useEffect(() => {
+        fetchProducts()
+    }, [])
+
+    const fetchProducts = async () => {
+        const { data, error } = await supabase.from('products').select('*').order('name')
+        if (!error && data) setBarProducts(data)
+    }
+
+    const handleAddRoom = async (room) => {
         if (!room.name || !room.price) return
-        setFreeRooms(prev => [...prev, { ...room, id: Date.now(), orders: [] }])
-        setShowAddRoom(false)
+
+        try {
+            const { data, error } = await supabase
+                .from('rooms')
+                .insert([{
+                    name: room.name,
+                    type: room.type,
+                    price: Number(room.price),
+                    capacity: Number(room.capacity)
+                }])
+                .select()
+
+            if (error) throw error
+
+            if (data) {
+                setFreeRooms(prev => [...prev, { ...data[0], orders: [] }])
+                setShowAddRoom(false)
+            }
+        } catch (err) {
+            alert("Xona qo'shishda xatolik: " + err.message)
+        }
     }
 
     const handleDeleteRoom = (id) => {
         setDeleteRoomId(id)
     }
 
-    const confirmDelete = () => {
+    const confirmDelete = async () => {
         if (deleteRoomId) {
-            setFreeRooms(prev => prev.filter(r => String(r.id) !== String(deleteRoomId)))
-            setDeleteRoomId(null)
+            try {
+                const { error } = await supabase
+                    .from('rooms')
+                    .delete()
+                    .eq('id', deleteRoomId)
+
+                if (error) throw error
+
+                setFreeRooms(prev => prev.filter(r => String(r.id) !== String(deleteRoomId)))
+                setDeleteRoomId(null)
+            } catch (err) {
+                alert("Xonani o'chirishda xatolik: " + err.message)
+            }
         }
     }
 
@@ -494,7 +743,31 @@ export default function Dashboard({ freeRooms, setFreeRooms, activeRooms, setAct
         setFreeRooms(prev => prev.filter(r => String(r.id) !== String(room.id)))
     }
 
-    const handleStop = (id) => {
+    useEffect(() => {
+        fetchHistory()
+    }, [])
+
+    const fetchHistory = async () => {
+        const { data, error } = await supabase
+            .from('history')
+            .select('*')
+            .order('created_at', { ascending: false })
+        if (!error && data) {
+            setHistory(prev => {
+                const merged = [...data]
+                prev.forEach(local => {
+                    const isDuplicate = data.some(remote =>
+                        remote.id === local.id ||
+                        (remote.created_at === local.created_at && remote.name === local.name)
+                    )
+                    if (!isDuplicate) merged.push(local)
+                })
+                return merged.sort((a, b) => new Date(b.created_at || b.date) - new Date(a.created_at || a.date))
+            })
+        }
+    }
+
+    const handleStop = async (id) => {
         const stopped = activeRooms.find(r => String(r.id) === String(id))
         if (!stopped) return
 
@@ -502,30 +775,59 @@ export default function Dashboard({ freeRooms, setFreeRooms, activeRooms, setAct
         const start = new Date(stopped.startTimeActual).getTime()
         const hours = (now.getTime() - start) / (1000 * 3600)
         const itemsTotal = (stopped.orders || []).reduce((sum, p) => sum + Number(p.price), 0)
-        const total = Math.round(hours * Number(stopped.price)) + itemsTotal
+        const preciseTotal = Math.round(hours * Number(stopped.price)) + itemsTotal
+        const roundedTotal = Math.round(preciseTotal / 1000) * 1000
 
         const entry = {
-            id: Date.now(),
-            roomId: stopped.id,
+            roomId: String(stopped.id),
             name: stopped.name,
             client: stopped.client,
-            date: now.toLocaleDateString(),
-            totalPrice: total,
+            date: `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`,
+            totalPrice: roundedTotal,
+            total_price: roundedTotal,
+            precisePrice: preciseTotal,
+            precise_price: preciseTotal,
             hours: Number(hours.toFixed(2)),
+            formattedTime: formatTime(Math.floor((now.getTime() - start) / 1000)),
             products: stopped.orders || [],
-            roomPrice: stopped.price // To'lov cheki uchun kerak
+            roomPrice: stopped.price,
+            room_price: stopped.price
         }
 
-        setHistory(prev => [entry, ...prev])
-        setFreeRooms(prev => [...prev, { id: stopped.id, name: stopped.name, price: stopped.price, orders: [] }])
-        setActiveRooms(prev => prev.filter(r => String(r.id) !== String(id)))
-
-        setShowReceipt(entry)
+        setPaymentEntry({ entry, stoppedId: id })
     }
 
-    const handleAddProduct = (room, product) => {
+    const completePayment = async (cash, card) => {
+        if (!paymentEntry) return
+        const { entry, stoppedId } = paymentEntry
+
+        const finalEntry = { ...entry, cash, card, created_at: new Date().toISOString() }
+
+        // Optimistic update: add to local history immediately
+        setHistory(prev => [finalEntry, ...prev])
+
+        try {
+            const { error } = await supabase.from('history').insert([finalEntry])
+            if (error) throw error
+            // fetchHistory() // Let local state handle it first, then sync
+        } catch (err) {
+            console.error("History save error:", err)
+            alert("Ma'lumotlarni saqlashda xatolik yuz berdi: " + (err.message || "Noma'lum xato"))
+        }
+
+        const stopped = activeRooms.find(r => String(r.id) === String(stoppedId))
+        if (stopped) {
+            setFreeRooms(prev => [...prev, { id: stopped.id, name: stopped.name, price: stopped.price, orders: [] }])
+        }
+        setActiveRooms(prev => prev.filter(r => String(r.id) !== String(stoppedId)))
+
+        setPaymentEntry(null)
+        setShowReceipt(finalEntry)
+    }
+
+    const handleAddProduct = async (room, product) => {
         if (!product) {
-            setDetailsRoom(room)
+            setQuickProductRoom(room)
             return
         }
 
@@ -535,10 +837,20 @@ export default function Dashboard({ freeRooms, setFreeRooms, activeRooms, setAct
                 : r
         ))
 
-        const bar = JSON.parse(localStorage.getItem('ps_bar_products') || '[]')
-        localStorage.setItem('ps_bar_products', JSON.stringify(bar.map(p =>
-            p.id === product.id ? { ...p, stock: Math.max(0, p.stock - 1) } : p
-        )))
+        try {
+            const { error } = await supabase
+                .from('products')
+                .update({ stock: Math.max(0, product.stock - 1) })
+                .eq('id', product.id)
+
+            if (error) throw error
+
+            setBarProducts(prev => prev.map(p =>
+                p.id === product.id ? { ...p, stock: Math.max(0, p.stock - 1) } : p
+            ))
+        } catch (err) {
+            console.error("Skladni yangilashda xatolik:", err)
+        }
     }
 
     return (
@@ -546,6 +858,21 @@ export default function Dashboard({ freeRooms, setFreeRooms, activeRooms, setAct
             {showAddRoom && <AddRoomModal onAdd={handleAddRoom} onClose={() => setShowAddRoom(false)} />}
             {showReceipt && <ReceiptModal receipt={showReceipt} onClose={() => setShowReceipt(null)} />}
             {deleteRoomId && <DeleteConfirmModal onConfirm={confirmDelete} onCancel={() => setDeleteRoomId(null)} />}
+            {paymentEntry && (
+                <PaymentModal
+                    entry={paymentEntry.entry}
+                    onConfirm={completePayment}
+                    onCancel={() => setPaymentEntry(null)}
+                />
+            )}
+            {quickProductRoom && (
+                <QuickProductAddModal
+                    room={activeRooms.find(r => String(r.id) === String(quickProductRoom.id)) || quickProductRoom}
+                    onClose={() => setQuickProductRoom(null)}
+                    onAddProduct={handleAddProduct}
+                    products={barProducts}
+                />
+            )}
 
             {detailsRoom && (
                 <RoomDetailsModal
@@ -554,12 +881,14 @@ export default function Dashboard({ freeRooms, setFreeRooms, activeRooms, setAct
                         (r.name.toLowerCase() === detailsRoom.name.toLowerCase())
                     ) || detailsRoom}
                     history={history}
+                    barProducts={barProducts}
                     isActive={activeRooms.some(r =>
                         (r.id && detailsRoom.id && String(r.id) === String(detailsRoom.id)) ||
                         (r.name.toLowerCase() === detailsRoom.name.toLowerCase())
                     )}
                     onClose={() => setDetailsRoom(null)}
                     onAddOrder={handleAddProduct}
+                    onStop={handleStop}
                 />
             )}
 

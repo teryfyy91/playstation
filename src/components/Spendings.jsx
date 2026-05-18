@@ -1,45 +1,59 @@
 import { useState, useEffect } from 'react'
 import { Plus, X, Pencil, Trash2, Wallet, TrendingDown, Receipt } from 'lucide-react'
+import { supabase } from '../lib/supabase'
 
 export default function Spendings() {
-    const [spendings, setSpendings] = useState(() => {
-        const saved = localStorage.getItem('ps_spendings')
-        return saved ? JSON.parse(saved) : []
-    })
+    const [spendings, setSpendings] = useState([])
     const [showForm, setShowForm] = useState(false)
     const [editId, setEditId] = useState(null)
     const [form, setForm] = useState({ amount: '', date: '', description: '' })
+    const [loading, setLoading] = useState(true)
 
     useEffect(() => {
-        localStorage.setItem('ps_spendings', JSON.stringify(spendings))
-    }, [spendings])
+        fetchSpendings()
+    }, [])
+
+    const fetchSpendings = async () => {
+        setLoading(true)
+        const { data, error } = await supabase
+            .from('spendings')
+            .select('*')
+            .order('date', { ascending: false })
+
+        if (!error && data) setSpendings(data)
+        setLoading(false)
+    }
 
     const totalMonth = spendings.reduce((acc, curr) => acc + Number(curr.amount), 0)
 
-    // Calculate last 24h totals
-    let last24hCount = 0;
-    const now = new Date();
-    spendings.forEach(s => {
-        const sDate = new Date(s.date);
-        const diffHrs = (now - sDate) / (1000 * 60 * 60);
-        if (diffHrs <= 24) {
-            last24hCount += Number(s.amount);
-        } else {
-            // If we don't have precise dates, we just assume last added items are recent for now
-            // But let's actually just sum everything for the 24h card if data is fresh
-        }
-    });
-
-    const handleAddOrEdit = () => {
+    const handleAddOrEdit = async () => {
         if (!form.amount || !form.date || !form.description) return
 
-        if (editId) {
-            setSpendings(prev => prev.map(s => s.id === editId ? { ...s, ...form } : s))
-        } else {
-            setSpendings(prev => [{ ...form, id: Date.now() }, ...prev])
-        }
+        try {
+            const spendingData = {
+                amount: Number(form.amount),
+                date: form.date,
+                description: form.description
+            }
 
-        closeModal()
+            if (editId) {
+                const { error } = await supabase
+                    .from('spendings')
+                    .update(spendingData)
+                    .eq('id', editId)
+                if (error) throw error
+            } else {
+                const { error } = await supabase
+                    .from('spendings')
+                    .insert([spendingData])
+                if (error) throw error
+            }
+
+            fetchSpendings()
+            closeModal()
+        } catch (err) {
+            alert("Xatolik: " + err.message)
+        }
     }
 
     const startEdit = (id) => {
@@ -51,9 +65,15 @@ export default function Spendings() {
         }
     }
 
-    const handleDelete = (id) => {
+    const handleDelete = async (id) => {
         if (window.confirm('Rostdan ham o\'chirmoqchimisiz?')) {
-            setSpendings(prev => prev.filter(s => s.id !== id))
+            const { error } = await supabase
+                .from('spendings')
+                .delete()
+                .eq('id', id)
+
+            if (!error) fetchSpendings()
+            else alert("O'chirishda xatolik: " + error.message)
         }
     }
 

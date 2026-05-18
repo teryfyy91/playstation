@@ -1,58 +1,71 @@
 import { useState, useEffect } from 'react'
 import { Package, Search, Plus, X, Tag, ShoppingCart, TrendingUp } from 'lucide-react'
+import { supabase } from '../lib/supabase'
 
 export default function Bar() {
-    const [products, setProducts] = useState(() => {
-        const saved = localStorage.getItem('ps_bar_products')
-        return saved ? JSON.parse(saved) : []
-    })
+    const [products, setProducts] = useState([])
     const [search, setSearch] = useState('')
     const [showForm, setShowForm] = useState(false)
-    const [form, setForm] = useState({ name: '', buyPrice: '', price: '', stock: '' })
-
+    const [form, setForm] = useState({ name: '', buy_price: '', price: '', stock: '' })
+    const [loading, setLoading] = useState(true)
     const [editingProduct, setEditingProduct] = useState(null)
 
+    // Supabase dan mahsulotlarni olish
     useEffect(() => {
-        localStorage.setItem('ps_bar_products', JSON.stringify(products))
-    }, [products])
+        fetchProducts()
+    }, [])
+
+    const fetchProducts = async () => {
+        setLoading(true)
+        const { data, error } = await supabase
+            .from('products')
+            .select('*')
+            .order('name')
+
+        if (!error && data) setProducts(data)
+        setLoading(false)
+    }
 
     const filtered = products.filter(p =>
         p.name.toLowerCase().includes(search.toLowerCase())
     )
 
-    const handleSave = () => {
-        if (!form.name || !form.price || !form.buyPrice) return
+    const handleSave = async () => {
+        if (!form.name || !form.price || !form.buy_price) return
 
-        if (editingProduct) {
-            setProducts(prev => prev.map(p =>
-                p.id === editingProduct.id
-                    ? {
-                        ...p,
-                        name: form.name,
-                        buyPrice: Number(form.buyPrice),
-                        price: Number(form.price),
-                        stock: Number(form.stock)
-                    }
-                    : p
-            ))
-        } else {
-            setProducts(prev => [...prev, {
-                id: Date.now(),
+        try {
+            const productData = {
                 name: form.name,
-                buyPrice: Number(form.buyPrice),
+                buy_price: Number(form.buy_price),
                 price: Number(form.price),
                 stock: Number(form.stock) || 0
-            }])
-        }
+            }
 
-        closeModal()
+            if (editingProduct) {
+                const { error } = await supabase
+                    .from('products')
+                    .update(productData)
+                    .eq('id', editingProduct.id)
+                if (error) throw error
+            } else {
+                const { error } = await supabase
+                    .from('products')
+                    .insert([productData])
+                if (error) throw error
+            }
+
+            fetchProducts()
+            closeModal()
+        } catch (err) {
+            alert("Xatolik: " + err.message)
+        }
     }
 
     const openEditModal = (p) => {
         setEditingProduct(p)
         setForm({
             name: p.name,
-            buyPrice: p.buyPrice,
+            buy_price: p.buy_price,
             price: p.price,
             stock: p.stock
         })
@@ -62,12 +75,18 @@ export default function Bar() {
     const closeModal = () => {
         setShowForm(false)
         setEditingProduct(null)
-        setForm({ name: '', buyPrice: '', price: '', stock: '' })
+        setForm({ name: '', buy_price: '', price: '', stock: '' })
     }
 
-    const deleteProduct = (id) => {
+    const deleteProduct = async (id) => {
         if (window.confirm('Haqiqatdan ham o\'chirmoqchimisiz?')) {
-            setProducts(prev => prev.filter(p => p.id !== id))
+            const { error } = await supabase
+                .from('products')
+                .delete()
+                .eq('id', id)
+
+            if (!error) fetchProducts()
+            else alert("O'chirishda xatolik: " + error.message)
         }
     }
 
@@ -104,13 +123,13 @@ export default function Bar() {
                 </div>
                 <div className="bg-[#1a1630] border border-[#2d2556] p-5 rounded-3xl">
                     <ShoppingCart className="text-amber-400 mb-2" size={20} />
-                    <p className="text-2xl text-white font-black">{(products.reduce((acc, p) => acc + (p.buyPrice * p.stock), 0)).toLocaleString()}</p>
+                    <p className="text-2xl text-white font-black">{(products.reduce((acc, p) => acc + (p.buy_price * p.stock), 0)).toLocaleString()}</p>
                     <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Sklad tan narxi</p>
                 </div>
                 <div className="bg-[#1a1630] border border-[#2d2556] p-5 rounded-3xl border-emerald-500/30">
                     <TrendingUp className="text-emerald-400 mb-2" size={20} />
                     <p className="text-2xl text-emerald-400 font-black">
-                        {(products.reduce((acc, p) => acc + ((p.price - p.buyPrice) * p.stock), 0)).toLocaleString()}
+                        {(products.reduce((acc, p) => acc + ((p.price - p.buy_price) * p.stock), 0)).toLocaleString()}
                     </p>
                     <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Kutilayotgan foyda</p>
                 </div>
@@ -153,13 +172,13 @@ export default function Bar() {
 
                         <div className="space-y-1 mb-4">
                             <p className="text-slate-500 text-[10px] font-bold uppercase flex justify-between">
-                                Kelish: <span className="text-slate-400 font-mono">{p.buyPrice.toLocaleString()}</span>
+                                Kelish: <span className="text-slate-400 font-mono">{p.buy_price?.toLocaleString()}</span>
                             </p>
                             <p className="text-slate-500 text-[10px] font-bold uppercase flex justify-between">
                                 Sotish: <span className="text-emerald-400 font-mono">{p.price.toLocaleString()}</span>
                             </p>
                             <p className="text-violet-400 text-[10px] font-bold uppercase flex justify-between border-t border-[#2d2556] pt-1">
-                                Foyda: <span className="font-mono">{(p.price - p.buyPrice).toLocaleString()}</span>
+                                Foyda: <span className="font-mono">{(p.price - (p.buy_price || 0)).toLocaleString()}</span>
                             </p>
                         </div>
 
@@ -202,7 +221,7 @@ export default function Bar() {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-slate-500 text-[10px] font-bold mb-2 uppercase tracking-[0.2em] ml-1">Kelgan Narxi</label>
-                                    <input type="number" value={form.buyPrice} onChange={e => setForm(f => ({ ...f, buyPrice: e.target.value }))}
+                                    <input type="number" value={form.buy_price} onChange={e => setForm(f => ({ ...f, buy_price: e.target.value }))}
                                         placeholder="7000" className="w-full bg-[#0f0c1e] border border-[#2d2556] text-white rounded-2xl px-5 py-4 text-sm outline-none focus:border-emerald-500 transition shadow-inner" />
                                 </div>
                                 <div>
