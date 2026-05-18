@@ -26,7 +26,7 @@ export default function Statistics({ freeRooms, activeRooms, setActivePage }) {
                     prev.forEach(local => {
                         const isDuplicate = hData.some(remote =>
                             remote.id === local.id ||
-                            (remote.created_at === local.created_at && remote.name === local.name)
+                            (remote.created_at === local.created_at && (remote.room_name || remote.name) === (local.room_name || local.name))
                         )
                         if (!isDuplicate) merged.push(local)
                     })
@@ -137,22 +137,34 @@ export default function Statistics({ freeRooms, activeRooms, setActivePage }) {
                     </div>
                 </div>
 
-                {/* Additional Info */}
-                <div className="rounded-[40px] bg-[#1a1630] border border-violet-500/20 p-8 flex flex-col justify-center items-center text-center shadow-2xl relative overflow-hidden group">
-                    <div className="absolute inset-0 bg-gradient-to-br from-violet-900/10 to-indigo-900/10 -z-10 group-hover:opacity-100 opacity-50 transition-all duration-700"></div>
-                    <div className="w-20 h-20 rounded-[28px] bg-violet-600/20 border border-violet-500/30 flex items-center justify-center mb-6 shadow-inner group-hover:scale-110 transition-transform duration-500">
-                        <TrendingUp size={40} className="text-violet-400" />
+                {/* Recent Spendings */}
+                <div className="rounded-[32px] bg-[#1a1630] border border-[#2d2556] p-8 shadow-2xl flex flex-col">
+                    <div className="flex justify-between items-center mb-6">
+                        <h3 className="text-white font-black text-lg uppercase tracking-tighter flex items-center gap-3">
+                            <Wallet size={20} className="text-rose-400" />
+                            So'nggi Xarajatlar
+                        </h3>
+                        <button onClick={() => setActivePage('spendings')} className="text-slate-500 hover:text-white text-[10px] font-black uppercase tracking-widest transition cursor-pointer">Barchasi</button>
                     </div>
-                    <h4 className="text-white font-black text-2xl uppercase tracking-tighter mb-3">Tizim Tayyor!</h4>
-                    <p className="text-slate-400 text-xs font-medium px-6 leading-relaxed">
-                        Barcha ma'lumotlar endi Supabase-da xavfsiz saqlanmoqda. Moliyaviy tahlil endi aniqroq!
-                    </p>
-                    <button
-                        onClick={() => setActivePage('dashboard')}
-                        className="mt-8 px-10 py-4 bg-gradient-to-r from-violet-600 to-indigo-600 hover:scale-105 text-white text-xs font-black uppercase tracking-[0.2em] rounded-2xl transition-all cursor-pointer shadow-xl shadow-violet-900/40"
-                    >
-                        Dashboard-ga o'tish
-                    </button>
+                    <div className="space-y-4 flex-1">
+                        {spendings.length === 0 ? (
+                            <div className="py-12 text-center bg-[#0f0c1e]/30 rounded-3xl border border-dashed border-[#2d2556]">
+                                <p className="text-slate-600 italic text-sm">Xarajatlar mavjud emas</p>
+                            </div>
+                        ) : (
+                            spendings.slice(0, 4).map((s, i) => (
+                                <div key={i} className="flex justify-between items-center p-4 rounded-2xl bg-[#0f0c1e] border border-[#2d2556] hover:border-rose-500/30 transition-all">
+                                    <div className="min-w-0 flex-1 mr-4">
+                                        <p className="text-white font-bold text-sm truncate">{s.description}</p>
+                                        <p className="text-slate-500 text-[10px] uppercase font-bold mt-0.5">{s.date}</p>
+                                    </div>
+                                    <div className="text-right flex-shrink-0">
+                                        <p className="text-rose-400 font-black font-mono text-sm">-{Number(s.amount).toLocaleString()}</p>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
                 </div>
             </div>
         </div>

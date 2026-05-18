@@ -23,13 +23,34 @@ export default function Login({ onLogin }) {
                 return
             }
 
-            // Supabase Auth Login
+            // Check Staff table for operators and admins
+            const { data: staffData } = await supabase
+                .from('staff')
+                .select('*')
+                .or(`name.eq.${form.username},email.eq.${form.username}`)
+                .eq('password', form.password)
+                .single()
+
+            if (staffData) {
+                setSuccess(`${staffData.name} xush kelibsiz!`)
+                setTimeout(() => {
+                    onLogin({
+                        username: staffData.name,
+                        id: staffData.id,
+                        email: staffData.email,
+                        role: staffData.role
+                    })
+                }, 1000)
+                return
+            }
+
+            // Fallback to Supabase Auth Login
             const { data, error: authError } = await supabase.auth.signInWithPassword({
                 email: form.username,
                 password: form.password,
             })
 
-            if (authError) throw authError
+            if (authError) throw new Error("Login yoki parol noto'g'ri!")
 
             if (data.user) {
                 setSuccess(`${data.user.email} xush kelibsiz!`)
@@ -59,11 +80,14 @@ export default function Login({ onLogin }) {
             <div className="w-full max-w-md z-10">
                 {/* Logo Section */}
                 <div className="flex flex-col items-center mb-8">
-                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-700 flex items-center justify-center shadow-2xl shadow-violet-900/50 mb-4 transform hover:rotate-6 transition-transform">
-                        <Gamepad2 size={32} className="text-white" />
+                    <div className="w-24 h-24 rounded-3xl flex items-center justify-center bg-black shadow-2xl shadow-violet-900/50 mb-5 overflow-hidden border-2 border-violet-500/20 transform hover:scale-105 transition-all">
+                        <img src="/logo.png" alt="Logo" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling.style.display = 'flex' }} />
+                        <div className="w-full h-full hidden items-center justify-center bg-gradient-to-br from-violet-600 to-indigo-700">
+                            <Gamepad2 size={40} className="text-white" />
+                        </div>
                     </div>
-                    <h1 className="text-white text-2xl font-black tracking-[0.2em] uppercase">
-                        PS CLUB <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-indigo-400">ADMIN</span>
+                    <h1 className="text-white text-3xl font-black tracking-tight uppercase flex items-center gap-3">
+                        GaimPoint <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-indigo-400 text-sm tracking-[0.2em] mt-1 relative top-px">ADMIN</span>
                     </h1>
                 </div>
 
@@ -130,7 +154,7 @@ export default function Login({ onLogin }) {
                 <div className="mt-10 flex flex-col items-center gap-4">
                     <div className="h-[1px] w-12 bg-[#2d2556]" />
                     <p className="text-slate-600 text-[10px] font-bold uppercase tracking-[0.3em] opacity-40">
-                        &copy; 2026 PS CLUB PLATFORM
+                        &copy; 2026 GAIMPOINT PLATFORM
                     </p>
                 </div>
             </div>

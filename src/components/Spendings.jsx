@@ -6,7 +6,8 @@ export default function Spendings() {
     const [spendings, setSpendings] = useState([])
     const [showForm, setShowForm] = useState(false)
     const [editId, setEditId] = useState(null)
-    const [form, setForm] = useState({ amount: '', date: '', description: '' })
+    const todayIso = new Date().toISOString().split('T')[0]
+    const [form, setForm] = useState({ amount: '', date: todayIso, description: '' })
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
@@ -80,7 +81,7 @@ export default function Spendings() {
     const closeModal = () => {
         setShowForm(false)
         setEditId(null)
-        setForm({ amount: '', date: '', description: '' })
+        setForm({ amount: '', date: todayIso, description: '' })
     }
 
     const inputCls = "w-full bg-[#0f0c1e] border border-[#2d2556] text-white rounded-xl px-4 py-2.5 text-sm outline-none focus:border-violet-500 transition placeholder:text-slate-700"
@@ -187,64 +188,84 @@ export default function Spendings() {
 
             {/* Modal */}
             {showForm && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-xl p-4">
-                    <div className="bg-[#1a1630] border border-[#2d2556] rounded-[36px] p-8 w-full max-w-sm shadow-2xl animate-scaleUp">
-                        <div className="flex justify-between items-center mb-8">
-                            <h3 className="text-white font-black text-xl uppercase tracking-tighter">{editId ? 'Tahrirlash' : 'Yangi Xarajat'}</h3>
-                            <button onClick={closeModal} className="w-10 h-10 rounded-full bg-[#0f0c1e] flex items-center justify-center text-slate-400 hover:text-white transition cursor-pointer">
+                <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/95 backdrop-blur-xl p-4 animate-fadeIn overflow-y-auto">
+                    <div className="bg-[#1a1630] border border-[#2d2556] rounded-[48px] p-8 md:p-10 w-full max-w-[420px] shadow-[0_0_100px_rgba(124,58,237,0.15)] animate-scaleUp relative overflow-hidden flex flex-col my-auto">
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-violet-600/10 blur-[80px] rounded-full -mr-20 -mt-20 pointer-events-none"></div>
+
+                        <div className="flex justify-between items-start mb-10 relative z-10">
+                            <div>
+                                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-700 flex items-center justify-center text-white mb-5 shadow-lg shadow-violet-900/40">
+                                    <Wallet size={24} />
+                                </div>
+                                <h3 className="text-white font-black text-2xl uppercase tracking-tighter">{editId ? 'Xarajatni tahrirlash' : 'Yangi Xarajat'}</h3>
+                                <p className="text-slate-500 text-[10px] font-bold uppercase tracking-[0.2em] mt-1.5">Klubdan pul chiqishi</p>
+                            </div>
+                            <button onClick={closeModal} className="w-12 h-12 rounded-full border border-[#2d2556] bg-[#0f0c1e] flex items-center justify-center text-slate-400 hover:text-white hover:bg-[#2d2556] hover:rotate-90 transition-all duration-300 cursor-pointer shadow-lg shadow-black/20">
                                 <X size={20} />
                             </button>
                         </div>
 
-                        <div className="space-y-6 mb-10">
-                            <div>
-                                <label className="block text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] mb-2 ml-1">Miqdor (so'm)</label>
-                                <div className="relative">
+                        <div className="space-y-4 mb-12 relative z-10">
+                            <div className="bg-[#0f0c1e] p-5 rounded-[28px] border border-[#2d2556] transition focus-within:border-violet-500/50 focus-within:shadow-[0_0_30px_rgba(124,58,237,0.1)]">
+                                <label className="block text-slate-500 text-[9px] font-black uppercase tracking-[0.2em] mb-2 ml-1">Summa</label>
+                                <div className="flex items-center gap-3">
                                     <input
+                                        autoFocus
                                         type="number"
                                         value={form.amount}
                                         onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
-                                        placeholder="0.00"
-                                        className={inputCls}
+                                        placeholder="0"
+                                        className="w-full bg-transparent text-white text-4xl font-black outline-none placeholder:text-slate-800 tracking-tighter"
                                     />
-                                    <span className="absolute right-4 top-2.5 text-[10px] text-slate-600 font-bold">SO'M</span>
+                                    <span className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] bg-[#1a1630] border border-[#2d2556] px-4 py-2.5 rounded-[14px]">So'm</span>
                                 </div>
                             </div>
 
-                            <div>
-                                <label className="block text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] mb-2 ml-1">Sana</label>
-                                <input
-                                    type="date"
-                                    value={form.date}
-                                    onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
-                                    className={inputCls}
-                                />
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="bg-[#0f0c1e] p-5 rounded-[28px] border border-[#2d2556] transition hover:border-[#3d3470]">
+                                    <label className="block text-slate-500 text-[9px] font-black uppercase tracking-[0.2em] mb-2 ml-1">Sana</label>
+                                    <input
+                                        type="date"
+                                        value={form.date}
+                                        onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
+                                        className="w-full bg-transparent text-white text-sm font-bold outline-none cursor-pointer"
+                                    />
+                                </div>
+                                <div className="bg-[#0f0c1e] p-5 rounded-[28px] border border-[#2d2556] transition focus-within:border-violet-500/50">
+                                    <label className="block text-slate-500 text-[9px] font-black uppercase tracking-[0.2em] mb-2 ml-1">Vaqt</label>
+                                    <input
+                                        type="time"
+                                        className="w-full bg-transparent text-slate-400 text-sm font-bold outline-none cursor-not-allowed opacity-50"
+                                        value={new Date().toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' }).replace('PM', '').replace('AM', '').trim()}
+                                        disabled
+                                    />
+                                </div>
                             </div>
 
-                            <div>
-                                <label className="block text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] mb-2 ml-1">Izoh (nima uchun?)</label>
+                            <div className="bg-[#0f0c1e] p-5 rounded-[28px] border border-[#2d2556] transition focus-within:border-violet-500/50">
+                                <label className="block text-slate-500 text-[9px] font-black uppercase tracking-[0.2em] mb-2 ml-1">Xarajat maqsadi</label>
                                 <textarea
                                     value={form.description}
                                     onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-                                    placeholder="Masalan: Elektr energiyasi to'lovi..."
-                                    className={`${inputCls} h-24 resize-none pt-4`}
+                                    placeholder="Nima uchun xarajat qilindi? (Masalan: Areknda to'lovi, Suv, Elektr...)"
+                                    className="w-full bg-transparent text-white text-sm font-bold outline-none resize-none h-16 placeholder:text-slate-700/60 leading-relaxed"
                                 />
                             </div>
                         </div>
 
-                        <div className="flex gap-3">
+                        <div className="flex gap-4 relative z-10">
                             <button
                                 onClick={closeModal}
-                                className="flex-1 py-4 rounded-2xl bg-[#0f0c1e] text-slate-500 text-xs font-black uppercase tracking-[0.2em] hover:text-white transition-all cursor-pointer"
+                                className="flex-1 py-5 rounded-[24px] bg-[#0f0c1e] border border-[#2d2556] text-slate-500 text-[10px] font-black uppercase tracking-widest hover:text-white hover:bg-[#2d2556] transition-all cursor-pointer"
                             >
-                                Bekor
+                                Bekor qilish
                             </button>
                             <button
                                 onClick={handleAddOrEdit}
                                 disabled={!form.amount || !form.date || !form.description}
-                                className="flex-[2] py-4 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-xs font-black uppercase tracking-[0.2em] shadow-lg shadow-violet-900/40 hover:scale-[1.02] active:scale-95 transition-all cursor-pointer disabled:opacity-30 disabled:grayscale disabled:cursor-not-allowed"
+                                className="flex-1 py-5 rounded-[24px] bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-[10px] font-black uppercase tracking-widest shadow-xl shadow-violet-900/40 hover:scale-[1.03] active:scale-95 transition-all cursor-pointer disabled:opacity-30 disabled:grayscale disabled:cursor-not-allowed disabled:hover:scale-100"
                             >
-                                Saqlash
+                                {editId ? 'Saqlash' : "Qo'shish"}
                             </button>
                         </div>
                     </div>

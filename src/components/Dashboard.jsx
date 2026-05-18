@@ -58,7 +58,7 @@ function RoomDetailsModal({ room, history, onClose, onAddOrder, isActive, onStop
         const hId = String(h.roomId || h.room_id || '').trim()
         const rId = String(room.id || '').trim()
 
-        const hName = String(h.name || '').toLowerCase().trim()
+        const hName = String(h.room_name || h.name || '').toLowerCase().trim()
         const rName = String(room.name || '').toLowerCase().trim()
 
         const idMatch = rId && hId === rId
@@ -122,11 +122,11 @@ function RoomDetailsModal({ room, history, onClose, onAddOrder, isActive, onStop
                                         </div>
                                         <div>
                                             <p className="text-white font-bold">{h.client}</p>
-                                            <p className="text-slate-500 text-xs">{h.timeRange} ({h.hours} soat)</p>
+                                            <p className="text-slate-500 text-xs">{h.formattedTime || h.timeRange} ({h.hours} soat)</p>
                                         </div>
                                     </div>
                                     <div className="text-right">
-                                        <p className="text-emerald-400 font-black">{formatMoney(h.totalPrice)}</p>
+                                        <p className="text-emerald-400 font-black">{formatMoney(h.total_price || h.totalPrice)}</p>
                                         {h.products?.length > 0 && (
                                             <p className="text-slate-600 text-[10px] uppercase font-bold">
                                                 {h.products.length} ta mahsulot: {h.products.map(p => p.name).join(', ')}
@@ -206,19 +206,25 @@ function RoomDetailsModal({ room, history, onClose, onAddOrder, isActive, onStop
                                             <button onClick={() => setShowSklad(false)} className="text-slate-500 hover:text-white"><X size={16} /></button>
                                         </div>
                                         <div className="grid grid-cols-2 gap-2 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
-                                            {barProducts.map(p => (
-                                                <button
-                                                    key={p.id}
-                                                    onClick={() => {
-                                                        onAddOrder(room, p);
-                                                    }}
-                                                    className="p-3 rounded-2xl bg-[#0f0c1e] border border-[#2d2556] text-slate-400 hover:text-white hover:border-violet-500 transition-all text-xs text-left group cursor-pointer relative"
-                                                >
-                                                    <div className="font-bold truncate">{p.name}</div>
-                                                    <div className="text-emerald-500 text-[10px] font-mono">{formatMoney(p.price)}</div>
-                                                    <Plus size={12} className="absolute top-2 right-2 text-violet-500 opacity-0 group-hover:opacity-100 transition" />
-                                                </button>
-                                            ))}
+                                            {barProducts.map(p => {
+                                                const outOfStock = Number(p.stock) <= 0;
+                                                return (
+                                                    <button
+                                                        key={p.id}
+                                                        disabled={outOfStock}
+                                                        onClick={() => {
+                                                            if (!outOfStock) onAddOrder(room, p);
+                                                        }}
+                                                        className={`p-3 rounded-2xl border transition-all text-xs text-left group relative ${outOfStock ? 'bg-red-900/10 border-red-500/30 text-red-500/50 cursor-not-allowed opacity-80' : 'bg-[#0f0c1e] border-[#2d2556] text-slate-400 cursor-pointer hover:text-white hover:border-violet-500'}`}
+                                                    >
+                                                        <div className="font-bold truncate">{p.name}</div>
+                                                        <div className={`mt-1 font-mono ${outOfStock ? 'text-red-500/70' : 'text-emerald-500 text-[10px]'}`}>
+                                                            {outOfStock ? 'QOLMADI' : formatMoney(p.price)}
+                                                        </div>
+                                                        {!outOfStock && <Plus size={12} className="absolute top-2 right-2 text-violet-500 opacity-0 group-hover:opacity-100 transition" />}
+                                                    </button>
+                                                )
+                                            })}
                                             {barProducts.length === 0 && <p className="col-span-2 text-slate-700 text-[10px] text-center italic">Sklad bo'sh</p>}
                                         </div>
                                     </div>
@@ -266,30 +272,36 @@ function QuickProductAddModal({ room, onClose, onAddProduct, products }) {
                     </div>
 
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-6 overflow-y-auto pr-4 pb-12 custom-scrollbar">
-                        {filtered.map(p => (
-                            <button
-                                key={p.id}
-                                onClick={() => { onAddProduct(room, p); onClose(); }}
-                                className="group p-5 rounded-[28px] bg-[#1a1630] border border-[#2d2556] hover:border-violet-500 hover:bg-violet-600/5 transition-all text-left flex flex-col min-h-[170px] cursor-pointer relative overflow-hidden shadow-lg hover:shadow-violet-900/40"
-                            >
-                                <div className="absolute top-[-20%] right-[-10%] w-32 h-32 bg-violet-600/5 blur-3xl rounded-full group-hover:bg-violet-600/10 transition" />
+                        {filtered.map(p => {
+                            const outOfStock = Number(p.stock) <= 0;
+                            return (
+                                <button
+                                    key={p.id}
+                                    disabled={outOfStock}
+                                    onClick={() => { if (!outOfStock) { onAddProduct(room, p); onClose(); } }}
+                                    className={`group p-5 rounded-[28px] border transition-all text-left flex flex-col min-h-[170px] relative overflow-hidden shadow-lg ${outOfStock ? 'bg-[#1a1318] border-red-900/40 cursor-not-allowed opacity-70' : 'bg-[#1a1630] border-[#2d2556] hover:border-violet-500 hover:bg-violet-600/5 cursor-pointer hover:shadow-violet-900/40'}`}
+                                >
+                                    {!outOfStock && <div className="absolute top-[-20%] right-[-10%] w-32 h-32 bg-violet-600/5 blur-3xl rounded-full group-hover:bg-violet-600/10 transition" />}
 
-                                <div className="relative z-10 flex-1">
-                                    <div className="w-11 h-11 rounded-xl bg-[#0f0c1e] border border-[#2d2556] flex items-center justify-center mb-3 text-slate-500 group-hover:text-violet-400 transition shadow-inner">
-                                        <Package size={22} />
+                                    <div className="relative z-10 flex-1">
+                                        <div className={`w-11 h-11 rounded-xl bg-[#0f0c1e] border border-[#2d2556] flex items-center justify-center mb-3 shadow-inner transition ${outOfStock ? 'text-red-500/50' : 'text-slate-500 group-hover:text-violet-400'}`}>
+                                            <Package size={22} />
+                                        </div>
+                                        <div className={`font-black text-lg truncate pr-2 transition leading-tight ${outOfStock ? 'text-slate-500' : 'text-white group-hover:text-violet-400'}`}>{p.name}</div>
+                                        <div className={`text-[10px] uppercase font-bold tracking-widest mt-1 ${outOfStock ? 'text-red-500' : 'text-slate-500'}`}>{outOfStock ? 'QOLMADI' : `${p.stock} ta qoldi`}</div>
                                     </div>
-                                    <div className="text-white font-black text-lg truncate pr-2 group-hover:text-violet-400 transition leading-tight">{p.name}</div>
-                                    <div className="text-slate-500 text-[10px] uppercase font-bold tracking-widest mt-1">{p.stock} ta qoldi</div>
-                                </div>
 
-                                <div className="flex items-center justify-between pt-4 mt-2 relative z-10">
-                                    <div className="text-emerald-400 font-black font-mono text-base">{formatMoney(p.price)}</div>
-                                    <div className="bg-violet-600/20 text-violet-400 p-2 rounded-xl group-hover:bg-violet-600 group-hover:text-white transition shadow-lg">
-                                        <Plus size={20} />
+                                    <div className="flex items-center justify-between pt-4 mt-2 relative z-10">
+                                        <div className={`font-black font-mono text-base ${outOfStock ? 'text-red-500/50' : 'text-emerald-400'}`}>{formatMoney(p.price)}</div>
+                                        {!outOfStock && (
+                                            <div className="bg-violet-600/20 text-violet-400 p-2 rounded-xl group-hover:bg-violet-600 group-hover:text-white transition shadow-lg">
+                                                <Plus size={20} />
+                                            </div>
+                                        )}
                                     </div>
-                                </div>
-                            </button>
-                        ))}
+                                </button>
+                            )
+                        })}
                         {filtered.length === 0 && (
                             <div className="col-span-full py-32 text-center">
                                 <Package size={64} className="mx-auto text-slate-800 mb-6" />
@@ -479,13 +491,11 @@ function ReceiptModal({ receipt, onClose }) {
     return (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 backdrop-blur-md p-4 animate-fadeIn overflow-y-auto">
             <div className="bg-white text-[#0f0c1e] w-full max-w-[350px] rounded-[32px] p-8 shadow-2xl animate-scaleUp relative border border-white/20 my-auto text-left">
-                <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-violet-600 via-indigo-600 to-violet-600"></div>
-
                 <div className="text-center mb-6">
                     <div className="w-16 h-16 rounded-2xl bg-[#0f0c1e] flex items-center justify-center mx-auto mb-4 text-white">
                         <Activity size={28} />
                     </div>
-                    <h2 className="text-2xl font-black uppercase tracking-tighter mb-1">PS CLUB</h2>
+                    <h2 className="text-2xl font-black uppercase tracking-tighter mb-1">GaimPoint</h2>
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] leading-none">To'lov Cheki</p>
                 </div>
 
@@ -758,7 +768,7 @@ export default function Dashboard({ freeRooms, setFreeRooms, activeRooms, setAct
                 prev.forEach(local => {
                     const isDuplicate = data.some(remote =>
                         remote.id === local.id ||
-                        (remote.created_at === local.created_at && remote.name === local.name)
+                        (remote.created_at === local.created_at && (remote.room_name || remote.name) === (local.room_name || local.name))
                     )
                     if (!isDuplicate) merged.push(local)
                 })
@@ -806,8 +816,22 @@ export default function Dashboard({ freeRooms, setFreeRooms, activeRooms, setAct
         // Optimistic update: add to local history immediately
         setHistory(prev => [finalEntry, ...prev])
 
+        // Prepare data for Supabase (only use snake_case columns and valid fields)
+        const dbEntry = {
+            room_id: finalEntry.roomId,
+            room_name: finalEntry.name,
+            client: finalEntry.client,
+            date: finalEntry.date,
+            total_price: finalEntry.total_price,
+            hours: finalEntry.hours,
+            products: finalEntry.products,
+            cash: finalEntry.cash,
+            card: finalEntry.card,
+            created_at: finalEntry.created_at
+        }
+
         try {
-            const { error } = await supabase.from('history').insert([finalEntry])
+            const { error } = await supabase.from('history').insert([dbEntry])
             if (error) throw error
             // fetchHistory() // Let local state handle it first, then sync
         } catch (err) {
@@ -895,7 +919,7 @@ export default function Dashboard({ freeRooms, setFreeRooms, activeRooms, setAct
             <div className="flex justify-between items-center mb-10 text-center md:text-left">
                 <div>
                     <h1 className="text-white text-3xl font-black uppercase tracking-tighter">Monitoring</h1>
-                    <p className="text-slate-500 text-sm font-bold uppercase tracking-widest mt-1">PlayStation Club Dashboard</p>
+                    <p className="text-slate-500 text-sm font-bold uppercase tracking-widest mt-1">GaimPoint Dashboard</p>
                 </div>
                 <div className="flex items-center gap-4">
                     <div className="bg-[#1a1630] border border-[#2d2556] px-6 py-3 rounded-2xl flex items-center gap-3">

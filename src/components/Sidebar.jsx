@@ -18,12 +18,15 @@ export default function Sidebar({ activePage, setActivePage, onLogout, user }) {
         <aside className="w-64 h-full bg-[#13102a] border-r border-[#2d2556] flex flex-col relative">
             {/* Logo */}
             <div className="flex items-center gap-3 px-6 py-6 border-b border-[#2d2556]">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-700 flex items-center justify-center shadow-lg shadow-violet-900/50">
-                    <Gamepad2 size={22} className="text-white" />
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-black shadow-lg shadow-violet-900/50 overflow-hidden border border-violet-500/30">
+                    <img src="/logo.png" alt="Logo" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling.style.display = 'flex' }} />
+                    <div className="w-full h-full hidden items-center justify-center bg-gradient-to-br from-violet-600 to-indigo-700">
+                        <Gamepad2 size={24} className="text-white" />
+                    </div>
                 </div>
                 <div>
-                    <p className="text-white font-bold text-base leading-tight">PS CLUB</p>
-                    <p className="text-violet-400 text-[10px] uppercase font-bold tracking-wider">Boshqaruv Paneli</p>
+                    <p className="text-white font-black text-xl leading-tight tracking-tight">GaimPoint</p>
+                    <p className="text-violet-400 text-[9px] uppercase font-black tracking-[0.2em] mt-0.5">Boshqaruv Paneli</p>
                 </div>
             </div>
 
