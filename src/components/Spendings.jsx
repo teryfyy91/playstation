@@ -221,25 +221,14 @@ export default function Spendings() {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="bg-[#0f0c1e] p-5 rounded-[28px] border border-[#2d2556] transition hover:border-[#3d3470]">
-                                    <label className="block text-slate-500 text-[9px] font-black uppercase tracking-[0.2em] mb-2 ml-1">Sana</label>
-                                    <input
-                                        type="date"
-                                        value={form.date}
-                                        onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
-                                        className="w-full bg-transparent text-white text-sm font-bold outline-none cursor-pointer"
-                                    />
-                                </div>
-                                <div className="bg-[#0f0c1e] p-5 rounded-[28px] border border-[#2d2556] transition focus-within:border-violet-500/50">
-                                    <label className="block text-slate-500 text-[9px] font-black uppercase tracking-[0.2em] mb-2 ml-1">Vaqt</label>
-                                    <input
-                                        type="time"
-                                        className="w-full bg-transparent text-slate-400 text-sm font-bold outline-none cursor-not-allowed opacity-50"
-                                        value={new Date().toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' }).replace('PM', '').replace('AM', '').trim()}
-                                        disabled
-                                    />
-                                </div>
+                            <div className="bg-[#0f0c1e] p-5 rounded-[28px] border border-[#2d2556] transition hover:border-[#3d3470]">
+                                <label className="block text-slate-500 text-[9px] font-black uppercase tracking-[0.2em] mb-2 ml-1">Sana</label>
+                                <input
+                                    type="date"
+                                    value={form.date}
+                                    onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
+                                    className="w-full bg-transparent text-white text-sm font-bold outline-none cursor-pointer"
+                                />
                             </div>
 
                             <div className="bg-[#0f0c1e] p-5 rounded-[28px] border border-[#2d2556] transition focus-within:border-violet-500/50">

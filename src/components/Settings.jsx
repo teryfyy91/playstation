@@ -150,34 +150,7 @@ export default function Settings() {
                     </div>
                 </div>
 
-                {/* Notifications */}
-                <div className="rounded-[32px] bg-[#1a1630] border border-[#2d2556] p-8 shadow-xl relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-amber-600/5 rounded-full -mr-16 -mt-16 blur-3xl group-hover:bg-amber-600/10 transition-all duration-700"></div>
-                    <div className="flex items-center gap-3 mb-6">
-                        <div className="w-10 h-10 rounded-xl bg-amber-600/20 border border-amber-500/30 flex items-center justify-center text-amber-400">
-                            <Bell size={20} />
-                        </div>
-                        <h2 className="text-white font-black text-xs uppercase tracking-widest">Ogohlantirishlar</h2>
-                    </div>
-                    <div className="flex items-center justify-between mb-8 p-4 bg-[#0f0c1e] rounded-2xl border border-[#2d2556]">
-                        <div>
-                            <p className="text-white text-sm font-black uppercase tracking-tight">Avtomatik ogohlantirish</p>
-                            <p className="text-slate-500 text-[9px] font-bold uppercase tracking-widest mt-1">Vaqt tugashidan oldin xabar berish</p>
-                        </div>
-                        <button
-                            onClick={() => setSettings(s => ({ ...s, autoNotify: !s.autoNotify }))}
-                            className={`relative w-12 h-6 rounded-full transition-all duration-500 cursor-pointer shadow-inner
-                ${settings.autoNotify ? 'bg-violet-600' : 'bg-[#2d2556]'}`}
-                        >
-                            <span className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all duration-500 shadow-md
-                ${settings.autoNotify ? 'left-7' : 'left-1'}`} />
-                        </button>
-                    </div>
-                    <div>
-                        <label className="block text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] mb-2 ml-1">Ogohlantirish (daqiqa oldin)</label>
-                        <input type="number" value={settings.warnMinutes} onChange={e => setSettings(s => ({ ...s, warnMinutes: e.target.value }))} className={inputCls} />
-                    </div>
-                </div>
+
 
                 <div className="pt-4 pb-12">
                     <button
