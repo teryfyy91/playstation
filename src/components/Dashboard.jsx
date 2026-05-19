@@ -338,7 +338,7 @@ function ActiveRoomCard({ room, onStop, onAddOrder, onOpenDetails }) {
 
     const displayTime = isStopwatch ? formatTime(elapsedSeconds) : (timeLeft <= 0 ? '-' : '') + formatTime(timeLeft)
     const isOverdue = !isStopwatch && timeLeft <= 0
-    const isWarning = !isStopwatch && timeLeft > 0 && timeLeft <= 300
+    const isWarning = false
 
     const currentElapsed = isStopwatch ? elapsedSeconds : (room.totalSeconds - timeLeft)
     const hoursElapsed = currentElapsed / 3600
