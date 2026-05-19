@@ -25,7 +25,7 @@ export default function Login({ onLogin }) {
 
             // Try login by name first
             let staffData = null
-            const { data: byName } = await supabase
+            const { data: byName, error: err1 } = await supabase
                 .from('staff')
                 .select('*')
                 .eq('name', form.username)
@@ -58,31 +58,10 @@ export default function Login({ onLogin }) {
                 return
             }
 
-            // Fallback to Supabase Auth Login (email must be valid)
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-            if (!emailRegex.test(form.username)) {
-                throw new Error("Ism yoki parol noto'g'ri!")
-            }
-
-            const { data, error: authError } = await supabase.auth.signInWithPassword({
-                email: form.username,
-                password: form.password,
-            })
-
-            if (authError) throw new Error("Login yoki parol noto'g'ri!")
-
-            if (data.user) {
-                setSuccess(`${data.user.email} xush kelibsiz!`)
-                setTimeout(() => {
-                    onLogin({
-                        username: data.user.email,
-                        id: data.user.id,
-                        email: data.user.email
-                    })
-                }, 1000)
-            }
+            // No match found
+            throw new Error("Ism yoki parol noto'g'ri!")
         } catch (err) {
-            setError(err.message || 'Login yoki parol noto\'g\'ri!')
+            setError(err.message || "Ism yoki parol noto'g'ri!")
         } finally {
             setLoading(false)
         }
