@@ -16,20 +16,34 @@ export default function Login({ onLogin }) {
         setLoading(true)
 
         try {
-            // Local fallback for admin (can be removed once admin is in Supabase)
+            // Local fallback for admin
             if (form.username === 'admin' && form.password === '1234') {
                 setSuccess('Admin xush kelibsiz!')
                 setTimeout(() => onLogin({ username: 'admin', role: 'admin' }), 1000)
                 return
             }
 
-            // Check Staff table for operators and admins
-            const { data: staffData } = await supabase
+            // Try login by name first
+            let staffData = null
+            const { data: byName } = await supabase
                 .from('staff')
                 .select('*')
-                .or(`name.eq.${form.username},email.eq.${form.username}`)
+                .eq('name', form.username)
                 .eq('password', form.password)
-                .single()
+                .maybeSingle()
+
+            if (byName) {
+                staffData = byName
+            } else {
+                // Try login by email
+                const { data: byEmail } = await supabase
+                    .from('staff')
+                    .select('*')
+                    .eq('email', form.username)
+                    .eq('password', form.password)
+                    .maybeSingle()
+                if (byEmail) staffData = byEmail
+            }
 
             if (staffData) {
                 setSuccess(`${staffData.name} xush kelibsiz!`)
@@ -44,7 +58,12 @@ export default function Login({ onLogin }) {
                 return
             }
 
-            // Fallback to Supabase Auth Login
+            // Fallback to Supabase Auth Login (email must be valid)
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+            if (!emailRegex.test(form.username)) {
+                throw new Error("Ism yoki parol noto'g'ri!")
+            }
+
             const { data, error: authError } = await supabase.auth.signInWithPassword({
                 email: form.username,
                 password: form.password,
