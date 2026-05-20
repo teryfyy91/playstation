@@ -82,7 +82,7 @@ export default function Login({ onLogin }) {
                         </div>
                     </div>
                     <h1 className="text-white text-4xl font-black tracking-tighter uppercase flex flex-col items-center gap-2 font-orbitron">
-                        GAIMPOINT <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-indigo-400 text-[10px] tracking-[0.5em] font-black">ADMIN PANELIGA KIRISH</span>
+                        GAIMPOINT <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-indigo-400 text-[10px] tracking-[0.5em] font-black">ADMIN PANELIGA KIRISH - v2.0.3</span>
                     </h1>
                 </div>
 
