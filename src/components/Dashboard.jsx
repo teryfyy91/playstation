@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
 import {
     Clock, AlertTriangle, Play, DoorOpen, Tv, Users,
-    Activity, Plus, X, Settings2, Search, Package, DollarSign
+    Activity, Plus, X, Settings2, Search, Package, DollarSign, Trash2, Wallet, CreditCard
 } from 'lucide-react'
+import { supabase } from '../lib/supabase'
+import DeleteConfirmModal from './modals/DeleteConfirmModal'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 function formatTime(seconds) {
@@ -52,7 +54,7 @@ function LiveSessionStats({ room }) {
 }
 
 // ─── Room Details Modal (Room Control Center) ───────────────────────────────
-function RoomDetailsModal({ room, history, onClose, onAddOrder, isActive, onStop, barProducts }) {
+function RoomDetailsModal({ room, history, onClose, onAddOrder, isActive, onStop, barProducts, onDeleteHistory }) {
     const now = new Date()
     const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
 
@@ -73,7 +75,6 @@ function RoomDetailsModal({ room, history, onClose, onAddOrder, isActive, onStop
     const totalEarnings = roomHistory.reduce((sum, h) => sum + (Number(h.totalPrice || h.total_price || 0)), 0)
     const totalHours = roomHistory.reduce((sum, h) => sum + (Number(h.hours || 0)), 0)
 
-    // Sklad mahsulotlari (Passed as prop)
     const [showSklad, setShowSklad] = useState(false)
 
     return (
@@ -127,13 +128,21 @@ function RoomDetailsModal({ room, history, onClose, onAddOrder, isActive, onStop
                                             <p className="text-slate-500 text-xs">{h.formattedTime || h.timeRange} ({h.hours} soat)</p>
                                         </div>
                                     </div>
-                                    <div className="text-right">
-                                        <p className="text-emerald-400 font-black">{formatMoney(h.total_price || h.totalPrice || 0)}</p>
-                                        {h.products?.length > 0 && (
-                                            <p className="text-slate-600 text-[10px] uppercase font-bold">
-                                                {h.products.length} ta mahsulot: {h.products.map(p => p.name).join(', ')}
-                                            </p>
-                                        )}
+                                    <div className="flex items-center gap-4">
+                                        <div className="text-right">
+                                            <p className="text-emerald-400 font-black">{formatMoney(h.total_price || h.totalPrice || 0)}</p>
+                                            {h.products?.length > 0 && (
+                                                <p className="text-slate-600 text-[10px] uppercase font-bold">
+                                                    {h.products.length} ta mahsulot: {h.products.map(p => p.name).join(', ')}
+                                                </p>
+                                            )}
+                                        </div>
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); onDeleteHistory(h.id); }}
+                                            className="w-10 h-10 rounded-xl bg-red-900/10 border border-red-500/20 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition cursor-pointer"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
                                     </div>
                                 </div>
                             ))
@@ -243,7 +252,6 @@ function RoomDetailsModal({ room, history, onClose, onAddOrder, isActive, onStop
 // ─── Quick Product Add Modal ─────────────────────────────────────────────────
 function QuickProductAddModal({ room, onClose, onAddProduct, products }) {
     const [search, setSearch] = useState('')
-
     const filtered = products.filter(p => p.name.toLowerCase().includes(search.toLowerCase()))
 
     return (
@@ -487,9 +495,7 @@ function AddRoomModal({ onAdd, onClose }) {
 // ─── Receipt Modal ──────────────────────────────────────────────────────────
 function ReceiptModal({ receipt, onClose }) {
     if (!receipt) return null
-
     const roomOnlyTotal = Math.round(receipt.hours * receipt.roomPrice)
-
     return (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 backdrop-blur-md p-4 animate-fadeIn overflow-y-auto">
             <div className="bg-white text-[#0f0c1e] w-full max-w-[350px] rounded-[32px] p-8 shadow-2xl animate-scaleUp relative border border-white/20 my-auto text-left">
@@ -500,7 +506,6 @@ function ReceiptModal({ receipt, onClose }) {
                     <h2 className="text-2xl font-black uppercase tracking-tighter mb-1 font-orbitron">GAIMPOINT</h2>
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] leading-none">To'lov Cheki</p>
                 </div>
-
                 <div className="border-y border-dashed border-slate-200 py-4 mb-4 space-y-1.5">
                     <div className="flex justify-between text-xs">
                         <span className="text-slate-400 font-bold uppercase tracking-widest">Mijoz</span>
@@ -515,7 +520,6 @@ function ReceiptModal({ receipt, onClose }) {
                         <span className="font-black text-[#0f0c1e]">{receipt.hours} soat</span>
                     </div>
                 </div>
-
                 <div className="space-y-3 mb-8">
                     <div className="flex justify-between text-sm items-center">
                         <span className="font-bold text-slate-600">Xona xizmati:</span>
@@ -533,18 +537,15 @@ function ReceiptModal({ receipt, onClose }) {
                         </div>
                     )}
                 </div>
-
                 <div className="bg-slate-50 -mx-8 px-8 py-5 mb-8 border-y border-slate-100">
                     <div className="flex justify-between items-center">
                         <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Jami To'lov</span>
                         <span className="text-2xl font-black text-[#0f0c1e]">{formatMoney(receipt.totalPrice)}</span>
                     </div>
                 </div>
-
                 <div className="text-center italic text-[10px] text-slate-400 mb-8 px-4">
                     Tashrifingiz uchun rahmat! <br /> Bizni tanlaganingizdan xursandmiz.
                 </div>
-
                 <button
                     onClick={onClose}
                     className="w-full py-4 rounded-2xl bg-[#0f0c1e] text-white font-black text-xs uppercase tracking-[0.2em] hover:bg-black transition-all active:scale-95 shadow-xl shadow-black/10 cursor-pointer"
@@ -556,31 +557,24 @@ function ReceiptModal({ receipt, onClose }) {
     )
 }
 
-// ─── Delete Confirmation Modal ────────────────────────────────────────────────
-// DeleteConfirmModal was here, now using shared component
-
 // ─── Payment Modal ────────────────────────────────────────────────────────────
 function PaymentModal({ entry, onConfirm, onCancel }) {
     const [cash, setCash] = useState(entry.totalPrice)
     const [card, setCard] = useState(0)
-
     const handleCashChange = (val) => {
         const n = Number(val) || 0
         setCash(n)
         setCard(Math.max(0, entry.totalPrice - n))
     }
-
     const handleCardChange = (val) => {
         const n = Number(val) || 0
         setCard(n)
         setCash(Math.max(0, entry.totalPrice - n))
     }
-
     return (
         <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/90 backdrop-blur-xl p-4 animate-fadeIn overflow-y-auto">
             <div className="bg-[#1a1630] border border-[#2d2556] rounded-[48px] p-6 md:p-10 w-full max-w-md shadow-2xl animate-scaleUp overflow-hidden relative my-auto">
                 <div className="absolute top-0 right-0 w-40 h-40 bg-violet-600/10 blur-3xl rounded-full -mr-20 -mt-20"></div>
-
                 <div className="text-center mb-6">
                     <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-700 flex items-center justify-center mx-auto mb-4 shadow-xl shadow-violet-900/40">
                         <Wallet size={32} className="text-white" />
@@ -588,7 +582,6 @@ function PaymentModal({ entry, onConfirm, onCancel }) {
                     <h3 className="text-white font-black text-2xl uppercase tracking-tighter mb-1">To'lovni Qabul Qilish</h3>
                     <p className="text-slate-500 text-[10px] font-bold uppercase tracking-[0.2em]">{entry.name} · {entry.client?.split(' [Staff:')[0] || entry.client}</p>
                 </div>
-
                 <div className="bg-[#0f0c1e] rounded-[32px] border border-[#2d2556] p-5 mb-6">
                     <div className="flex justify-between items-center mb-3 pb-3 border-b border-[#2d2556]">
                         <span className="text-slate-500 text-[9px] font-black uppercase tracking-widest">Sarflangan Vaqt</span>
@@ -599,7 +592,6 @@ function PaymentModal({ entry, onConfirm, onCancel }) {
                         <span className="text-emerald-400 text-xl font-black">{formatMoney(entry.totalPrice)}</span>
                     </div>
                 </div>
-
                 <div className="space-y-4 mb-8">
                     <div>
                         <label className="block text-slate-500 text-[9px] font-black uppercase tracking-[0.2em] mb-2 ml-1">Naqd To'lov (So'm)</label>
@@ -630,14 +622,8 @@ function PaymentModal({ entry, onConfirm, onCancel }) {
                         </div>
                     </div>
                 </div>
-
                 <div className="flex gap-4">
-                    <button
-                        onClick={onCancel}
-                        className="flex-1 py-5 rounded-[24px] bg-[#0f0c1e] border border-[#2d2556] text-slate-500 font-black text-[10px] uppercase tracking-widest hover:text-white transition cursor-pointer"
-                    >
-                        Bekor Qilish
-                    </button>
+                    <button onClick={onCancel} className="flex-1 py-5 rounded-[24px] bg-[#0f0c1e] border border-[#2d2556] text-slate-500 font-black text-[10px] uppercase tracking-widest hover:text-white transition cursor-pointer">Bekor Qilish</button>
                     <button
                         onClick={() => onConfirm(cash, card)}
                         className="flex-[2] py-5 rounded-[24px] bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-black text-[10px] uppercase tracking-[0.2em] shadow-lg shadow-emerald-900/40 hover:scale-[1.02] active:scale-95 transition cursor-pointer"
@@ -650,18 +636,13 @@ function PaymentModal({ entry, onConfirm, onCancel }) {
     )
 }
 
-
-
-import { supabase } from '../lib/supabase'
-import { Wallet, CreditCard } from 'lucide-react'
-import DeleteConfirmModal from './modals/DeleteConfirmModal'
-
 // ─── Dashboard ───────────────────────────────────────────────────────────────
 export default function Dashboard({ freeRooms, setFreeRooms, activeRooms, setActiveRooms, user }) {
     const [detailsRoom, setDetailsRoom] = useState(null)
     const [showAddRoom, setShowAddRoom] = useState(false)
     const [showReceipt, setShowReceipt] = useState(null)
     const [deleteRoomId, setDeleteRoomId] = useState(null)
+    const [deleteHistoryId, setDeleteHistoryId] = useState(null)
     const [history, setHistory] = useState(() => JSON.parse(localStorage.getItem('ps_detailed_history') || '[]'))
     const [activeTab, setActiveTab] = useState('free')
     const [quickProductRoom, setQuickProductRoom] = useState(null)
@@ -674,6 +655,7 @@ export default function Dashboard({ freeRooms, setFreeRooms, activeRooms, setAct
 
     useEffect(() => {
         fetchProducts()
+        fetchHistory()
     }, [])
 
     const fetchProducts = async () => {
@@ -681,50 +663,54 @@ export default function Dashboard({ freeRooms, setFreeRooms, activeRooms, setAct
         if (!error && data) setBarProducts(data)
     }
 
+    const fetchHistory = async () => {
+        const { data, error } = await supabase
+            .from('history')
+            .select('*')
+            .order('created_at', { ascending: false })
+        if (!error && data) {
+            const filteredData = data.filter(h => h.client?.includes(`[Staff:${user?.name || user?.username || 'Unknown'}]`))
+            setHistory(prev => {
+                const merged = [...filteredData]
+                prev.forEach(local => {
+                    const isDuplicate = filteredData.some(remote =>
+                        remote.id === local.id ||
+                        (remote.created_at === local.created_at && (remote.room_name || remote.name) === (local.room_name || local.name))
+                    )
+                    const isMine = local.client?.includes(`[Staff:${user?.name || user?.username || 'Unknown'}]`)
+                    if (!isDuplicate && isMine) merged.push(local)
+                })
+                return merged.sort((a, b) => new Date(b.created_at || b.date) - new Date(a.created_at || a.date))
+            })
+        }
+    }
+
     const handleAddRoom = async (room) => {
         if (!room.name || !room.price) return
-
         try {
-            const { data, error } = await supabase
-                .from('rooms')
-                .insert([{
-                    name: room.name,
-                    type: room.type,
-                    price: Number(room.price),
-                    capacity: Number(room.capacity)
-                }])
-                .select()
-
+            const { data, error } = await supabase.from('rooms').insert([{
+                name: room.name,
+                type: room.type,
+                price: Number(room.price),
+                capacity: Number(room.capacity)
+            }]).select()
             if (error) throw error
-
             if (data) {
                 setFreeRooms(prev => [...prev, { ...data[0], orders: [] }])
                 setShowAddRoom(false)
             }
-        } catch (err) {
-            alert("Xona qo'shishda xatolik: " + err.message)
-        }
+        } catch (err) { alert("Xona qo'shishda xatolik: " + err.message) }
     }
 
-    const handleDeleteRoom = (id) => {
-        setDeleteRoomId(id)
-    }
-
+    const handleDeleteRoom = (id) => setDeleteRoomId(id)
     const confirmDelete = async () => {
         if (deleteRoomId) {
             try {
-                const { error } = await supabase
-                    .from('rooms')
-                    .delete()
-                    .eq('id', deleteRoomId)
-
+                const { error } = await supabase.from('rooms').delete().eq('id', deleteRoomId)
                 if (error) throw error
-
                 setFreeRooms(prev => prev.filter(r => String(r.id) !== String(deleteRoomId)))
                 setDeleteRoomId(null)
-            } catch (err) {
-                alert("Xonani o'chirishda xatolik: " + err.message)
-            }
+            } catch (err) { alert("Xonani o'chirishda xatolik: " + err.message) }
         }
     }
 
@@ -740,46 +726,15 @@ export default function Dashboard({ freeRooms, setFreeRooms, activeRooms, setAct
         setFreeRooms(prev => prev.filter(r => String(r.id) !== String(room.id)))
     }
 
-    useEffect(() => {
-        fetchHistory()
-    }, [])
-
-    const fetchHistory = async () => {
-        const { data, error } = await supabase
-            .from('history')
-            .select('*')
-            .order('created_at', { ascending: false })
-        if (!error && data) {
-            // Filter by current user
-            const filteredData = data.filter(h => h.client?.includes(`[Staff:${user?.name || user?.username || 'Unknown'}]`))
-
-            setHistory(prev => {
-                const merged = [...filteredData]
-                prev.forEach(local => {
-                    const isDuplicate = filteredData.some(remote =>
-                        remote.id === local.id ||
-                        (remote.created_at === local.created_at && (remote.room_name || remote.name) === (local.room_name || local.name))
-                    )
-                    // Ensure local also matches user
-                    const isMine = local.client?.includes(`[Staff:${user?.name || user?.username || 'Unknown'}]`)
-                    if (!isDuplicate && isMine) merged.push(local)
-                })
-                return merged.sort((a, b) => new Date(b.created_at || b.date) - new Date(a.created_at || a.date))
-            })
-        }
-    }
-
     const handleStop = async (id) => {
         const stopped = activeRooms.find(r => String(r.id) === String(id))
         if (!stopped) return
-
         const now = new Date()
         const start = new Date(stopped.startTimeActual).getTime()
         const hours = (now.getTime() - start) / (1000 * 3600)
         const itemsTotal = (stopped.orders || []).reduce((sum, p) => sum + (Number(p.price) || 0), 0)
         const preciseTotal = Math.round(hours * Number(stopped.price)) + itemsTotal
         const roundedTotal = Math.round(preciseTotal / 1000) * 1000
-
         const entry = {
             roomId: String(stopped.id),
             name: stopped.name,
@@ -795,20 +750,14 @@ export default function Dashboard({ freeRooms, setFreeRooms, activeRooms, setAct
             roomPrice: stopped.price,
             room_price: stopped.price
         }
-
         setPaymentEntry({ entry, stoppedId: id })
     }
 
     const completePayment = async (cash, card) => {
         if (!paymentEntry) return
         const { entry, stoppedId } = paymentEntry
-
         const finalEntry = { ...entry, cash, card, created_at: new Date().toISOString() }
-
-        // Optimistic update: add to local history immediately
         setHistory(prev => [finalEntry, ...prev])
-
-        // Prepare data for Supabase (only use snake_case columns and valid fields)
         const dbEntry = {
             room_id: finalEntry.roomId,
             room_name: finalEntry.name,
@@ -821,11 +770,9 @@ export default function Dashboard({ freeRooms, setFreeRooms, activeRooms, setAct
             card: finalEntry.card,
             created_at: finalEntry.created_at
         }
-
         try {
             const { error } = await supabase.from('history').insert([dbEntry])
             if (error) throw error
-            // fetchHistory() // Let local state handle it first, then sync
         } catch (err) {
             console.error("History save error:", err)
             alert("Ma'lumotlarni saqlashda xatolik yuz berdi: " + (err.message || "Noma'lum xato"))
@@ -836,98 +783,44 @@ export default function Dashboard({ freeRooms, setFreeRooms, activeRooms, setAct
             setFreeRooms(prev => [...prev, { id: stopped.id, name: stopped.name, price: stopped.price, orders: [] }])
         }
         setActiveRooms(prev => prev.filter(r => String(r.id) !== String(stoppedId)))
-
         setPaymentEntry(null)
         setShowReceipt(finalEntry)
     }
 
     const handleAddProduct = async (room, product) => {
-        if (!product) {
-            setQuickProductRoom(room)
-            return
-        }
-
+        if (!product) { setQuickProductRoom(room); return; }
         setActiveRooms(prev => prev.map(r =>
             (String(r.id) === String(room.id) || r.name.toLowerCase() === room.name.toLowerCase())
                 ? { ...r, orders: [...(r.orders || []), product] }
                 : r
         ))
+    }
 
+    const handleDeleteHistory = async () => {
+        if (!deleteHistoryId) return
         try {
-            const { error } = await supabase
-                .from('products')
-                .update({ stock: Math.max(0, product.stock - 1) })
-                .eq('id', product.id)
-
+            const { error } = await supabase.from('history').delete().eq('id', deleteHistoryId)
             if (error) throw error
-
-            setBarProducts(prev => prev.map(p =>
-                p.id === product.id ? { ...p, stock: Math.max(0, p.stock - 1) } : p
-            ))
-        } catch (err) {
-            console.error("Skladni yangilashda xatolik:", err)
-        }
+            setHistory(prev => prev.filter(h => h.id !== deleteHistoryId))
+            setDeleteHistoryId(null)
+        } catch (err) { alert("O'chirishda xatolik: " + err.message) }
     }
 
     return (
-        <div className="p-8 min-h-screen animate-fadeIn max-w-7xl mx-auto">
-            {showAddRoom && <AddRoomModal onAdd={handleAddRoom} onClose={() => setShowAddRoom(false)} />}
-            {showReceipt && <ReceiptModal receipt={showReceipt} onClose={() => setShowReceipt(null)} />}
-            {deleteRoomId && <DeleteConfirmModal onConfirm={confirmDelete} onCancel={() => setDeleteRoomId(null)} />}
-            {paymentEntry && (
-                <PaymentModal
-                    entry={paymentEntry.entry}
-                    onConfirm={completePayment}
-                    onCancel={() => setPaymentEntry(null)}
-                />
-            )}
-            {quickProductRoom && (
-                <QuickProductAddModal
-                    room={activeRooms.find(r => String(r.id) === String(quickProductRoom.id)) || quickProductRoom}
-                    onClose={() => setQuickProductRoom(null)}
-                    onAddProduct={handleAddProduct}
-                    products={barProducts}
-                />
-            )}
-
-            {detailsRoom && (
-                <RoomDetailsModal
-                    room={activeRooms.find(r =>
-                        (r.id && detailsRoom.id && String(r.id) === String(detailsRoom.id)) ||
-                        (r.name.toLowerCase() === detailsRoom.name.toLowerCase())
-                    ) || detailsRoom}
-                    history={history}
-                    barProducts={barProducts}
-                    isActive={activeRooms.some(r =>
-                        (r.id && detailsRoom.id && String(r.id) === String(detailsRoom.id)) ||
-                        (r.name.toLowerCase() === detailsRoom.name.toLowerCase())
-                    )}
-                    onClose={() => setDetailsRoom(null)}
-                    onAddOrder={handleAddProduct}
-                    onStop={handleStop}
-                />
-            )}
-
-            <div className="flex justify-between items-center mb-10 text-center md:text-left">
+        <div className="p-6 md:p-10 min-h-screen animate-fadeIn">
+            <div className="flex justify-between items-center mb-12">
                 <div>
-                    <h1 className="text-white text-3xl font-black uppercase tracking-tighter">Monitoring</h1>
-                    <p className="text-slate-500 text-sm font-bold uppercase tracking-widest mt-1">GaimPoint Dashboard</p>
+                    <h1 className="text-white text-4xl font-black uppercase tracking-tighter flex items-center gap-3">
+                        <Activity className="text-violet-500" size={32} /> DASHBOARD
+                    </h1>
+                    <p className="text-slate-500 text-xs font-bold uppercase tracking-[0.3em] mt-1 ml-1">Klubingiz joriy holati boshqaruvi</p>
                 </div>
-                <div className="flex items-center gap-4">
-                    <div className="bg-[#1a1630] border border-[#2d2556] px-6 py-3 rounded-2xl flex items-center gap-3">
-                        <Activity size={20} className="text-violet-500" />
-                        <div>
-                            <p className="text-white font-black leading-tight">{activeRooms.length}</p>
-                            <p className="text-slate-600 text-[10px] font-bold uppercase tracking-widest">Faol</p>
-                        </div>
-                    </div>
-                    <button
-                        onClick={() => setShowAddRoom(true)}
-                        className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-sm font-black uppercase tracking-widest shadow-lg shadow-violet-900/20 hover:from-violet-500 hover:to-indigo-500 transition cursor-pointer"
-                    >
-                        <Plus size={18} /> Xona qo'shish
-                    </button>
-                </div>
+                <button
+                    onClick={() => setShowAddRoom(true)}
+                    className="flex items-center gap-2 px-8 py-4 rounded-[24px] bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-xs font-black uppercase tracking-[0.2em] shadow-lg shadow-violet-900/40 hover:scale-[1.03] active:scale-95 transition-all cursor-pointer"
+                >
+                    <Plus size={18} /> Yangi Xona
+                </button>
             </div>
 
             <div className="flex justify-center mb-12">
@@ -935,7 +828,7 @@ export default function Dashboard({ freeRooms, setFreeRooms, activeRooms, setAct
                     <button
                         onClick={() => setActiveTab('free')}
                         className={`flex items-center gap-3 px-10 py-5 rounded-[24px] text-sm font-black uppercase tracking-widest transition-all
-                            ${activeTab === 'free' ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+                        ${activeTab === 'free' ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
                     >
                         <DoorOpen size={20} /> Bo'sh Xonalar
                         <span className="ml-2 bg-black/30 px-3 py-1 rounded-full text-[10px]">{freeRooms.length}</span>
@@ -943,7 +836,7 @@ export default function Dashboard({ freeRooms, setFreeRooms, activeRooms, setAct
                     <button
                         onClick={() => setActiveTab('active')}
                         className={`flex items-center gap-3 px-10 py-5 rounded-[24px] text-sm font-black uppercase tracking-widest transition-all
-                            ${activeTab === 'active' ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+                        ${activeTab === 'active' ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
                     >
                         <Activity size={20} /> Faol Seanslar
                         <span className="ml-2 bg-black/30 px-3 py-1 rounded-full text-[10px]">{activeRooms.length}</span>
@@ -977,6 +870,50 @@ export default function Dashboard({ freeRooms, setFreeRooms, activeRooms, setAct
                         ))
                     )}
                 </div>
+            )}
+
+            {showAddRoom && <AddRoomModal onAdd={handleAddRoom} onClose={() => setShowAddRoom(false)} />}
+            {showReceipt && <ReceiptModal receipt={showReceipt} onClose={() => setShowReceipt(null)} />}
+            {detailsRoom && (
+                <RoomDetailsModal
+                    room={detailsRoom}
+                    history={history}
+                    onClose={() => setDetailsRoom(null)}
+                    onAddOrder={handleAddProduct}
+                    isActive={activeRooms.some(r => String(r.id) === String(detailsRoom.id))}
+                    onStop={handleStop}
+                    barProducts={barProducts}
+                    onDeleteHistory={(id) => setDeleteHistoryId(id)}
+                />
+            )}
+            {quickProductRoom && (
+                <QuickProductAddModal
+                    room={quickProductRoom}
+                    products={barProducts}
+                    onClose={() => setQuickProductRoom(null)}
+                    onAddProduct={handleAddProduct}
+                />
+            )}
+            {paymentEntry && (
+                <PaymentModal
+                    entry={paymentEntry.entry}
+                    onConfirm={completePayment}
+                    onCancel={() => setPaymentEntry(null)}
+                />
+            )}
+            {deleteRoomId && (
+                <DeleteConfirmModal
+                    onConfirm={confirmDelete}
+                    onCancel={() => setDeleteRoomId(null)}
+                    description="Ushbu xonani butunlay o'chirib yubormoqchimisiz?"
+                />
+            )}
+            {deleteHistoryId && (
+                <DeleteConfirmModal
+                    onConfirm={handleDeleteHistory}
+                    onCancel={() => setDeleteHistoryId(null)}
+                    description="Ushbu seans tarixini ochirib yubormoqchimisiz? Bu amalni ortga qaytarib bo'lmaydi."
+                />
             )}
         </div>
     )
