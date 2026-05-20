@@ -24,6 +24,12 @@ function formatMoney(num) {
     return value.toLocaleString('uz-UZ') + " so'm"
 }
 
+function formatClockTime(dateStr) {
+    if (!dateStr) return '--:--'
+    const date = new Date(dateStr)
+    return date.toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit', hour12: false })
+}
+
 // ─── Countdown ─────────────────────────────────────────────────────────────
 function useCountdown(initialSeconds) {
     const [timeLeft, setTimeLeft] = useState(initialSeconds)
@@ -46,9 +52,15 @@ function LiveSessionStats({ room }) {
             <p className="text-emerald-400 text-lg font-mono font-black tracking-tighter">
                 {formatTime(elapsedSeconds)} · {formatMoney(Math.round(earnedMoney))}
             </p>
-            <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-0.5">
-                Tarif: {formatMoney(room.price)}/s
-            </p>
+            <div className="flex items-center gap-2 mt-0.5">
+                <p className="text-slate-500 text-[9px] font-bold uppercase tracking-widest">
+                    Tarif: {formatMoney(room.price)}/s
+                </p>
+                <span className="text-slate-700">•</span>
+                <p className="text-violet-400 text-[9px] font-bold uppercase tracking-widest flex items-center gap-1">
+                    <Clock size={10} /> {formatClockTime(room.startTimeActual)} da boshlandi
+                </p>
+            </div>
         </div>
     )
 }
@@ -124,8 +136,10 @@ function RoomDetailsModal({ room, history, onClose, onAddOrder, isActive, onStop
                                             <Users size={18} />
                                         </div>
                                         <div>
-                                            <p className="text-white font-bold">{h.client?.split(' [Staff:')[0] || 'Mijoz'}</p>
-                                            <p className="text-slate-500 text-xs">{h.formattedTime || h.timeRange} ({h.hours} soat)</p>
+                                            <p className="text-white font-bold">{h.client?.split(' (')[0]?.split(' [Staff:')[0] || 'Mijoz'}</p>
+                                            <p className="text-slate-500 text-xs">
+                                                {h.timeRange || (h.client?.match(/\((.*?)\)/)?.[1]) || h.formattedTime} ({h.hours} soat)
+                                            </p>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-4">
@@ -735,6 +749,8 @@ export default function Dashboard({ freeRooms, setFreeRooms, activeRooms, setAct
         const itemsTotal = (stopped.orders || []).reduce((sum, p) => sum + (Number(p.price) || 0), 0)
         const preciseTotal = Math.round(hours * Number(stopped.price)) + itemsTotal
         const roundedTotal = Math.round(preciseTotal / 1000) * 1000
+        const startTimeActual = new Date(stopped.startTimeActual)
+        const timeRange = `${formatClockTime(startTimeActual)} - ${formatClockTime(now)}`
         const entry = {
             roomId: String(stopped.id),
             name: stopped.name,
@@ -746,6 +762,7 @@ export default function Dashboard({ freeRooms, setFreeRooms, activeRooms, setAct
             precise_price: preciseTotal,
             hours: Number(hours.toFixed(2)),
             formattedTime: formatTime(Math.floor((now.getTime() - start) / 1000)),
+            timeRange: timeRange,
             products: stopped.orders || [],
             roomPrice: stopped.price,
             room_price: stopped.price
@@ -761,7 +778,7 @@ export default function Dashboard({ freeRooms, setFreeRooms, activeRooms, setAct
         const dbEntry = {
             room_id: finalEntry.roomId,
             room_name: finalEntry.name,
-            client: `${finalEntry.client} [Staff:${user?.name || user?.username || 'Unknown'}]`,
+            client: `${finalEntry.client} (${finalEntry.timeRange}) [Staff:${user?.name || user?.username || 'Unknown'}]`,
             date: finalEntry.date,
             total_price: finalEntry.total_price,
             hours: finalEntry.hours,
