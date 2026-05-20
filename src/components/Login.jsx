@@ -76,7 +76,7 @@ export default function Login({ onLogin }) {
             <div className="w-full max-w-md z-10">
                 <div className="flex flex-col items-center mb-10">
                     <div className="w-32 h-32 rounded-[40px] flex items-center justify-center bg-[#1a1630] shadow-[0_0_50px_rgba(139,92,246,0.4)] mb-6 overflow-hidden border border-violet-500/20 transform hover:scale-110 transition-all duration-500 group">
-                        <img src="/logo.png" alt="Logo" className="w-full h-full object-cover mix-blend-screen transition-transform duration-500" onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling.style.display = 'flex' }} />
+                        <img src="/gaim-logo.png" alt="Logo" className="w-full h-full object-cover mix-blend-screen transition-transform duration-500" onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling.style.display = 'flex' }} />
                         <div className="w-full h-full hidden items-center justify-center bg-gradient-to-br from-violet-600 to-indigo-700">
                             <Gamepad2 size={50} className="text-white" />
                         </div>

@@ -16,7 +16,7 @@ export default function Sidebar({ activePage, setActivePage, onLogout, user }) {
         <aside className="w-64 h-full bg-[#1a1630] border-r border-[#2d2556] flex flex-col relative">
             <div className="flex items-center gap-3 px-6 py-8 border-b border-[#2d2556]">
                 <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-[#1a1630] shadow-[0_0_30px_rgba(139,92,246,0.3)] overflow-hidden border border-violet-500/20 group hover:border-violet-500/50 transition-all duration-500">
-                    <img src="/logo.png" alt="Logo" className="w-full h-full object-cover mix-blend-screen transform group-hover:scale-110 transition-transform duration-500" onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling.style.display = 'flex' }} />
+                    <img src="/gaim-logo.png" alt="Logo" className="w-full h-full object-cover mix-blend-screen transform group-hover:scale-110 transition-transform duration-500" onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling.style.display = 'flex' }} />
                     <div className="w-full h-full hidden items-center justify-center bg-gradient-to-br from-violet-600 to-indigo-700">
                         <Gamepad2 size={28} className="text-white" />
                     </div>
