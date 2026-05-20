@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Plus, X, Pencil, Trash2, Wallet, TrendingDown, Receipt } from 'lucide-react'
+import { Plus, X, Pencil, Trash2, Wallet, TrendingDown, Receipt, Loader2 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import DeleteConfirmModal from './modals/DeleteConfirmModal'
 
@@ -123,7 +123,10 @@ export default function Spendings({ user }) {
                     </div>
                     <div>
                         <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] mb-1">Umumiy xarajat</p>
-                        <h3 className="text-white text-3xl font-black tracking-tighter">{totalMonth.toLocaleString()} <span className="text-xs text-slate-500 font-bold ml-1 uppercase">so'm</span></h3>
+                        <h3 className="text-white text-3xl font-black tracking-tighter">
+                            {loading ? <Loader2 className="animate-spin text-slate-500" size={20} /> : totalMonth.toLocaleString()}
+                            <span className="text-xs text-slate-500 font-bold ml-1 uppercase">so'm</span>
+                        </h3>
                     </div>
                 </div>
                 <div className="bg-[#1a1630] border border-[#2d2556] rounded-[32px] p-6 flex items-center gap-5 shadow-xl relative overflow-hidden group">
@@ -134,14 +137,18 @@ export default function Spendings({ user }) {
                     <div>
                         <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] mb-1">Eng ko'p sarf</p>
                         <h3 className="text-white text-2xl font-black tracking-tighter truncate max-w-[200px]">
-                            {spendings.length > 0 ? spendings.reduce((a, b) => Number(a.amount) > Number(b.amount) ? a : b).description : '-'}
+                            {loading ? <Loader2 className="animate-spin text-slate-500" size={20} /> : (spendings.length > 0 ? spendings.reduce((a, b) => Number(a.amount) > Number(b.amount) ? a : b).description : '-')}
                         </h3>
                     </div>
                 </div>
             </div>
 
-            {/* Empty State */}
-            {spendings.length === 0 && (
+            {loading ? (
+                <div className="flex flex-col items-center justify-center py-40 animate-fadeIn">
+                    <Loader2 className="animate-spin text-violet-500 mb-4" size={48} />
+                    <p className="text-slate-500 font-bold uppercase tracking-[0.3em] text-[10px]">Xarajatlar yuklanmoqda...</p>
+                </div>
+            ) : spendings.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-32 text-center bg-[#1a1630]/30 border-2 border-dashed border-[#2d2556] rounded-[48px]">
                     <div className="w-20 h-20 rounded-3xl bg-[#0f0c1e] border border-[#2d2556] flex items-center justify-center mb-6 shadow-2xl">
                         <Receipt size={32} className="text-slate-700" />
@@ -155,10 +162,7 @@ export default function Spendings({ user }) {
                         <Plus size={18} /> Qo'shish
                     </button>
                 </div>
-            )}
-
-            {/* List */}
-            {spendings.length > 0 && (
+            ) : (
                 <div className="space-y-4">
                     {spendings.map(s => (
                         <div key={s.id} className="rounded-[28px] bg-[#1a1630] border border-[#2d2556] p-6 flex items-center justify-between gap-6 hover:border-violet-500/30 hover:bg-[#1e1a3a] transition-all duration-300 shadow-md">

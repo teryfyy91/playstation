@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Package, Search, Plus, X, Tag, ShoppingCart, TrendingUp } from 'lucide-react'
+import { Package, Search, Plus, X, Tag, ShoppingCart, TrendingUp, Loader2 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import DeleteConfirmModal from './modals/DeleteConfirmModal'
 
@@ -119,23 +119,29 @@ export default function Bar() {
             <div className="grid grid-cols-4 gap-4 mb-8">
                 <div className="bg-[#1a1630] border border-[#2d2556] p-5 rounded-3xl">
                     <Package className="text-emerald-400 mb-2" size={20} />
-                    <p className="text-2xl text-white font-black">{products.length}</p>
+                    <p className="text-2xl text-white font-black">
+                        {loading ? <Loader2 className="animate-spin text-slate-500" size={20} /> : products.length}
+                    </p>
                     <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Turdagi mahsulotlar</p>
                 </div>
                 <div className="bg-[#1a1630] border border-[#2d2556] p-5 rounded-3xl">
                     <TrendingUp className="text-violet-400 mb-2" size={20} />
-                    <p className="text-2xl text-white font-black">{products.reduce((acc, p) => acc + p.stock, 0)}</p>
+                    <p className="text-2xl text-white font-black">
+                        {loading ? <Loader2 className="animate-spin text-slate-500" size={20} /> : products.reduce((acc, p) => acc + p.stock, 0)}
+                    </p>
                     <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Jami zaxira soni</p>
                 </div>
                 <div className="bg-[#1a1630] border border-[#2d2556] p-5 rounded-3xl">
                     <ShoppingCart className="text-amber-400 mb-2" size={20} />
-                    <p className="text-2xl text-white font-black">{(products.reduce((acc, p) => acc + (p.buy_price * p.stock), 0)).toLocaleString()}</p>
+                    <p className="text-2xl text-white font-black">
+                        {loading ? <Loader2 className="animate-spin text-slate-500" size={20} /> : (products.reduce((acc, p) => acc + (p.buy_price * p.stock), 0)).toLocaleString()}
+                    </p>
                     <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Sklad tan narxi</p>
                 </div>
                 <div className="bg-[#1a1630] border border-[#2d2556] p-5 rounded-3xl border-emerald-500/30">
                     <TrendingUp className="text-emerald-400 mb-2" size={20} />
                     <p className="text-2xl text-emerald-400 font-black">
-                        {(products.reduce((acc, p) => acc + ((p.price - p.buy_price) * p.stock), 0)).toLocaleString()}
+                        {loading ? <Loader2 className="animate-spin text-slate-700" size={20} /> : (products.reduce((acc, p) => acc + ((p.price - p.buy_price) * p.stock), 0)).toLocaleString()}
                     </p>
                     <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Kutilayotgan foyda</p>
                 </div>
@@ -198,7 +204,12 @@ export default function Bar() {
                 ))}
             </div>
 
-            {filtered.length === 0 && (
+            {loading ? (
+                <div className="py-32 text-center animate-fadeIn">
+                    <Loader2 size={48} className="animate-spin text-violet-500 mx-auto mb-4" />
+                    <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">Ma'lumotlar yuklanmoqda...</p>
+                </div>
+            ) : filtered.length === 0 && (
                 <div className="py-20 text-center animate-fadeIn">
                     <div className="w-20 h-20 rounded-full bg-[#1a1630] flex items-center justify-center mx-auto mb-4 border border-[#2d2556]">
                         <Package size={32} className="text-slate-700" />
