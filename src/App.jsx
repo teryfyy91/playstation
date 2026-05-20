@@ -1,12 +1,10 @@
 import { useState, useEffect } from 'react'
 import Sidebar from './components/Sidebar'
 import Dashboard from './components/Dashboard'
-import Booking from './components/Booking'
 import Clients from './components/Clients'
 import Spendings from './components/Spendings'
 import Settings from './components/Settings'
 import Statistics from './components/Statistics'
-import Employer from './components/Employer'
 import Bar from './components/Bar'
 import Login from './components/Login'
 import './index.css'
@@ -20,35 +18,61 @@ const getSaved = (key, def) => {
 }
 
 export default function App() {
-  const [currentUser, setCurrentUser] = useState(() => getSaved('ps_user', null))
+  const [currentUser, setCurrentUser] = useState(() => {
+    const saved = localStorage.getItem('ps_user')
+    return saved ? JSON.parse(saved) : null
+  })
   const [isLoggedIn, setIsLoggedIn] = useState(() => !!localStorage.getItem('ps_user'))
   const [activePage, setActivePage] = useState('dashboard')
 
+  // Use user-specific keys for sessions
+  const getUserKey = (base) => currentUser ? `${base}_${currentUser.id || currentUser.username}` : base
+
   // Xonalar holati
   const [freeRooms, setFreeRooms] = useState([])
-  const [activeRooms, setActiveRooms] = useState(() => getSaved('activeRooms', []))
+  const [activeRooms, setActiveRooms] = useState([])
+
+  // Load user-specific active rooms once logged in
+  useEffect(() => {
+    if (currentUser) {
+      const savedActive = localStorage.getItem(getUserKey('activeRooms'))
+      if (savedActive) setActiveRooms(JSON.parse(savedActive))
+      else setActiveRooms([])
+    }
+  }, [currentUser])
 
   // Supabase dan xonalarni olish
   useEffect(() => {
     const fetchRooms = async () => {
-      const { data, error } = await supabase
-        .from('rooms')
-        .select('*')
+      if (!currentUser) return;
+
+      let query = supabase.from('rooms').select('*')
+
+      // If we have a way to filter by staff_id, we should do it here
+      // For now, if the user is not 'Admin' or 'max', maybe they see nothing?
+      // Or we can assume rooms should have a 'staff_id'
+
+      const { data, error } = await query
 
       if (!error && data) {
-        // Faqat bo'sh xonalarni (localStorage dagi active larda yo'qlarini) freeRooms ga yuklaymiz
+        // Filter: only show rooms that belong to this user (if column exists)
+        // Since we checked and 'staff_id' is missing, we'll suggest adding it.
+        // For now, let's filter locally if possible or just show all but separate active sessions.
+
         const activeIds = activeRooms.map(r => String(r.id))
         const free = data.filter(r => !activeIds.includes(String(r.id)))
         setFreeRooms(free)
       }
     }
     fetchRooms()
-  }, [])
+  }, [currentUser, activeRooms])
 
-  // Har safar o'zgarganda saqlab borish (ActiveRooms hali localda qolishi mumkin yoki uni ham sync qilish kerak)
+  // Har safar o'zgarganda saqlab borish
   useEffect(() => {
-    localStorage.setItem('activeRooms', JSON.stringify(activeRooms))
-  }, [activeRooms])
+    if (currentUser) {
+      localStorage.setItem(getUserKey('activeRooms'), JSON.stringify(activeRooms))
+    }
+  }, [activeRooms, currentUser])
 
   const handleLogin = (user) => {
     setCurrentUser(user)
@@ -57,6 +81,10 @@ export default function App() {
   }
 
   const handleLogout = () => {
+    const key = getUserKey('activeRooms')
+    // Option: clear local sessions on logout for security
+    // localStorage.removeItem(key) 
+
     setCurrentUser(null)
     setIsLoggedIn(false)
     localStorage.removeItem('ps_user')
@@ -74,10 +102,8 @@ export default function App() {
             setActivePage={setActivePage}
           />
         )
-      case 'booking': return <Booking />
       case 'statistics': return <Statistics freeRooms={freeRooms} activeRooms={activeRooms} setActivePage={setActivePage} />
       case 'bar': return <Bar />
-      case 'employer': return <Employer />
       case 'spendings': return <Spendings />
       case 'settings': return <Settings />
       default: return (

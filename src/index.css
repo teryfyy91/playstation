@@ -1,9 +1,17 @@
 @import "tailwindcss";
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=Orbitron:wght@400;500;600;700;800;900&display=swap');
 
 * {
   font-family: 'Inter', sans-serif;
   box-sizing: border-box;
+}
+
+h1,
+h2,
+h3,
+h4,
+.font-orbitron {
+  font-family: 'Orbitron', sans-serif !important;
 }
 
 :root {
@@ -13,7 +21,7 @@
 body {
   margin: 0;
   padding: 0;
-  background: #0f0c1e;
+  background: #141129;
   color: #e2e8f0;
 }
 
@@ -74,4 +82,21 @@ input::-webkit-inner-spin-button {
 input[type=number] {
   -moz-appearance: textfield;
   appearance: none;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #2d2556;
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #6d28d9;
 }

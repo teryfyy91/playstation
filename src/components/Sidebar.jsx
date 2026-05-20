@@ -3,11 +3,9 @@ import { LayoutDashboard, CalendarCheck, Users, Settings, Gamepad2, LogOut, Wall
 
 const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'booking', label: 'Bron qilish', icon: CalendarCheck },
     { id: 'statistics', label: 'Statistika', icon: BarChart3 },
     { id: 'bar', label: 'Bar / Sklad', icon: ShoppingCart },
     { id: 'spendings', label: 'Xarajatlar', icon: Wallet },
-    { id: 'employer', label: 'Xodimlar', icon: Briefcase },
     { id: 'settings', label: 'Sozlamalar', icon: Settings },
 ]
 
@@ -15,18 +13,17 @@ export default function Sidebar({ activePage, setActivePage, onLogout, user }) {
     const [showConfirm, setShowConfirm] = useState(false)
 
     return (
-        <aside className="w-64 h-full bg-[#13102a] border-r border-[#2d2556] flex flex-col relative">
-            {/* Logo */}
-            <div className="flex items-center gap-3 px-6 py-6 border-b border-[#2d2556]">
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-black shadow-lg shadow-violet-900/50 overflow-hidden border border-violet-500/30">
-                    <img src="/logo.png" alt="Logo" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling.style.display = 'flex' }} />
+        <aside className="w-64 h-full bg-[#1a1630] border-r border-[#2d2556] flex flex-col relative">
+            <div className="flex items-center gap-3 px-6 py-8 border-b border-[#2d2556]">
+                <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-[#1a1630] shadow-[0_0_30px_rgba(139,92,246,0.3)] overflow-hidden border border-violet-500/20 group hover:border-violet-500/50 transition-all duration-500">
+                    <img src="/logo.png" alt="Logo" className="w-full h-full object-cover mix-blend-screen transform group-hover:scale-110 transition-transform duration-500" onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling.style.display = 'flex' }} />
                     <div className="w-full h-full hidden items-center justify-center bg-gradient-to-br from-violet-600 to-indigo-700">
-                        <Gamepad2 size={24} className="text-white" />
+                        <Gamepad2 size={28} className="text-white" />
                     </div>
                 </div>
                 <div>
-                    <p className="text-white font-black text-xl leading-tight tracking-tight">GaimPoint</p>
-                    <p className="text-violet-400 text-[9px] uppercase font-black tracking-[0.2em] mt-0.5">Boshqaruv Paneli</p>
+                    <h1 className="text-white font-black text-xl leading-none tracking-tight font-orbitron">GAIMPOINT</h1>
+                    <p className="text-violet-400 text-[8px] uppercase font-black tracking-[0.3em] mt-2 opacity-70">BOSHQRUV PANELI</p>
                 </div>
             </div>
 

@@ -70,14 +70,7 @@ export default function Statistics({ freeRooms, activeRooms, setActivePage }) {
         usage: Math.min(100, (roomPerformance[name] / (totalIncome || 1)) * 100)
     })).sort((a, b) => b.incomeValue - a.incomeValue).slice(0, 8)
 
-    if (loading) {
-        return (
-            <div className="p-6 min-h-screen flex flex-col items-center justify-center">
-                <Loader2 className="text-violet-500 animate-spin mb-4" size={40} />
-                <p className="text-slate-500 text-xs font-black uppercase tracking-[0.2em]">Statistika hisoblanmoqda...</p>
-            </div>
-        )
-    }
+
 
     return (
         <div className="p-6 min-h-screen animate-fadeIn">
@@ -116,7 +109,7 @@ export default function Statistics({ freeRooms, activeRooms, setActivePage }) {
                     <div className="space-y-8">
                         {roomStats.length === 0 ? (
                             <div className="py-20 text-center bg-[#0f0c1e]/30 rounded-3xl border border-dashed border-[#2d2556]">
-                                <p className="text-slate-600 italic">Hali ma'lumotlar mavjud emas</p>
+                                <p className="text-slate-600 italic">Hali ma'mulotlar mavjud emas</p>
                             </div>
                         ) : (
                             roomStats.map((room, i) => (
@@ -165,6 +158,72 @@ export default function Statistics({ freeRooms, activeRooms, setActivePage }) {
                             ))
                         )}
                     </div>
+                </div>
+            </div>
+
+            {/* Today's Product Sales by Room */}
+            <div className="mt-8 rounded-[40px] bg-[#1a1630] border border-[#2d2556] p-8 md:p-10 shadow-2xl">
+                <div className="flex justify-between items-center mb-8">
+                    <div>
+                        <h3 className="text-white font-black text-2xl uppercase tracking-tighter flex items-center gap-4">
+                            <TrendingUp size={28} className="text-cyan-400" />
+                            Bugun xonalar olingan mahsulotlar
+                        </h3>
+                        <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mt-1">Xonalar kesimida bugun sotilgan barcha mahsulotlar</p>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {(() => {
+                        const todayHistory = history.filter(h => h.date === today)
+                        const roomProds = {}
+                        todayHistory.forEach(h => {
+                            const rName = h.room_name || h.name || "Noma'lum"
+                            if (!roomProds[rName]) roomProds[rName] = { products: [], total: 0 }
+                            if (h.products && Array.isArray(h.products)) {
+                                h.products.forEach(p => {
+                                    roomProds[rName].products.push(p)
+                                    roomProds[rName].total += Number(p.price || 0)
+                                })
+                            }
+                        })
+
+                        const entries = Object.entries(roomProds)
+                        if (entries.length === 0) {
+                            return (
+                                <div className="col-span-full py-20 text-center bg-[#0f0c1e]/30 rounded-[32px] border border-dashed border-[#2d2556]">
+                                    <p className="text-slate-600 font-bold uppercase tracking-widest text-xs">Bugun hali mahsulot sotilmadi</p>
+                                </div>
+                            )
+                        }
+
+                        return entries.map(([name, data], idx) => (
+                            <div key={idx} className="bg-[#0f0c1e]/50 border border-[#2d2556] rounded-[32px] p-6 hover:border-cyan-500/30 transition shadow-xl flex flex-col">
+                                <div className="flex justify-between items-start mb-6">
+                                    <div className="w-12 h-12 rounded-2xl bg-cyan-900/20 flex items-center justify-center text-cyan-400">
+                                        <TrendingUp size={24} />
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-white font-black text-lg tracking-tight uppercase">{name}</p>
+                                        <p className="text-cyan-400 font-black font-mono text-xs">{data.total.toLocaleString()} so'm</p>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2 flex-1 max-h-[200px] overflow-y-auto pr-1 custom-scrollbar">
+                                    {data.products.length === 0 ? (
+                                        <p className="text-slate-600 text-[10px] uppercase font-bold italic">Mahsulot olinmagan</p>
+                                    ) : (
+                                        data.products.map((p, pIdx) => (
+                                            <div key={pIdx} className="flex justify-between items-center py-2 px-3 rounded-xl bg-[#0f0c1e] border border-[#2d2556]">
+                                                <span className="text-slate-300 text-[11px] font-bold truncate pr-2">{p.name}</span>
+                                                <span className="text-emerald-400 text-[10px] font-black font-mono">{Number(p.price).toLocaleString()}</span>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+                        ))
+                    })()}
                 </div>
             </div>
         </div>

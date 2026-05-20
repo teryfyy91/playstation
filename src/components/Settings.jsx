@@ -64,14 +64,7 @@ export default function Settings() {
 
     const inputCls = "w-full bg-[#0f0c1e] border border-[#2d2556] text-white rounded-xl px-4 py-2.5 text-sm outline-none focus:border-violet-500 transition placeholder:text-slate-700"
 
-    if (loading && !saved) {
-        return (
-            <div className="p-6 min-h-screen flex flex-col items-center justify-center">
-                <Loader2 className="text-violet-500 animate-spin mb-4" size={40} />
-                <p className="text-slate-500 text-xs font-black uppercase tracking-[0.2em]">Yuklanmoqda...</p>
-            </div>
-        )
-    }
+
 
     return (
         <div className="p-6 min-h-screen max-w-2xl animate-fadeIn">

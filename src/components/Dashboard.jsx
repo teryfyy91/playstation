@@ -495,7 +495,7 @@ function ReceiptModal({ receipt, onClose }) {
                     <div className="w-16 h-16 rounded-2xl bg-[#0f0c1e] flex items-center justify-center mx-auto mb-4 text-white">
                         <Activity size={28} />
                     </div>
-                    <h2 className="text-2xl font-black uppercase tracking-tighter mb-1">GaimPoint</h2>
+                    <h2 className="text-2xl font-black uppercase tracking-tighter mb-1 font-orbitron">GAIMPOINT</h2>
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] leading-none">To'lov Cheki</p>
                 </div>
 

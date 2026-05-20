@@ -19,7 +19,7 @@ export default function Login({ onLogin }) {
             // Local fallback for admin
             if (form.username === 'admin' && form.password === '1234') {
                 setSuccess('Admin xush kelibsiz!')
-                setTimeout(() => onLogin({ username: 'admin', role: 'admin' }), 1000)
+                onLogin({ username: 'admin', role: 'admin' })
                 return
             }
 
@@ -47,14 +47,12 @@ export default function Login({ onLogin }) {
 
             if (staffData) {
                 setSuccess(`${staffData.name} xush kelibsiz!`)
-                setTimeout(() => {
-                    onLogin({
-                        username: staffData.name,
-                        id: staffData.id,
-                        email: staffData.email,
-                        role: staffData.role
-                    })
-                }, 1000)
+                onLogin({
+                    username: staffData.name,
+                    id: staffData.id,
+                    email: staffData.email,
+                    role: staffData.role
+                })
                 return
             }
 
@@ -76,16 +74,15 @@ export default function Login({ onLogin }) {
             <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-indigo-600/10 blur-[150px] rounded-full animate-pulse" style={{ animationDelay: '1s' }} />
 
             <div className="w-full max-w-md z-10">
-                {/* Logo Section */}
-                <div className="flex flex-col items-center mb-8">
-                    <div className="w-24 h-24 rounded-3xl flex items-center justify-center bg-black shadow-2xl shadow-violet-900/50 mb-5 overflow-hidden border-2 border-violet-500/20 transform hover:scale-105 transition-all">
-                        <img src="/logo.png" alt="Logo" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling.style.display = 'flex' }} />
+                <div className="flex flex-col items-center mb-10">
+                    <div className="w-32 h-32 rounded-[40px] flex items-center justify-center bg-[#1a1630] shadow-[0_0_50px_rgba(139,92,246,0.4)] mb-6 overflow-hidden border border-violet-500/20 transform hover:scale-110 transition-all duration-500 group">
+                        <img src="/logo.png" alt="Logo" className="w-full h-full object-cover mix-blend-screen transition-transform duration-500" onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling.style.display = 'flex' }} />
                         <div className="w-full h-full hidden items-center justify-center bg-gradient-to-br from-violet-600 to-indigo-700">
-                            <Gamepad2 size={40} className="text-white" />
+                            <Gamepad2 size={50} className="text-white" />
                         </div>
                     </div>
-                    <h1 className="text-white text-3xl font-black tracking-tight uppercase flex items-center gap-3">
-                        GaimPoint <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-indigo-400 text-sm tracking-[0.2em] mt-1 relative top-px">ADMIN</span>
+                    <h1 className="text-white text-4xl font-black tracking-tighter uppercase flex flex-col items-center gap-2 font-orbitron">
+                        GAIMPOINT <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-indigo-400 text-[10px] tracking-[0.5em] font-black">ADMIN PANELIGA KIRISH</span>
                     </h1>
                 </div>
 
