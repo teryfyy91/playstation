@@ -771,11 +771,22 @@ export default function Dashboard({ freeRooms, setFreeRooms, activeRooms, setAct
             created_at: finalEntry.created_at
         }
         try {
-            const { error } = await supabase.from('history').insert([dbEntry])
+            const { data, error } = await supabase.from('history').insert([dbEntry]).select()
             if (error) throw error
+            if (data && data[0]) {
+                // Update local history with the real ID from Supabase
+                setHistory(prev => {
+                    const newHist = [...prev]
+                    const idx = newHist.findIndex(h => h.created_at === finalEntry.created_at && (h.room_name || h.name) === (finalEntry.room_name || finalEntry.name))
+                    if (idx !== -1) {
+                        newHist[idx] = { ...newHist[idx], id: data[0].id }
+                    }
+                    return newHist
+                })
+            }
         } catch (err) {
             console.error("History save error:", err)
-            alert("Ma'lumotlarni saqlashda xatolik yuz berdi: " + (err.message || "Noma'lum xato"))
+            // alert("Ma'lumotlarni saqlashda xatolik yuz berdi: " + (err.message || "Noma'lum xato"))
         }
 
         const stopped = activeRooms.find(r => String(r.id) === String(stoppedId))
@@ -801,9 +812,14 @@ export default function Dashboard({ freeRooms, setFreeRooms, activeRooms, setAct
         try {
             const { error } = await supabase.from('history').delete().eq('id', deleteHistoryId)
             if (error) throw error
-            setHistory(prev => prev.filter(h => h.id !== deleteHistoryId))
+
+            // Filter out by ID, being careful with types (string vs number)
+            setHistory(prev => prev.filter(h => String(h.id) !== String(deleteHistoryId)))
             setDeleteHistoryId(null)
-        } catch (err) { alert("O'chirishda xatolik: " + err.message) }
+        } catch (err) {
+            console.error("Delete error:", err)
+            alert("O'chirishda xatolik yuz berdi")
+        }
     }
 
     return (
