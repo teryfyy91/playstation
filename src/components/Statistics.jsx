@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { BarChart3, TrendingUp, DollarSign, Clock, Users, ArrowUpRight, ArrowDownRight, Loader2, Wallet } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
-export default function Statistics({ freeRooms, activeRooms, setActivePage }) {
+export default function Statistics({ freeRooms, activeRooms, setActivePage, user }) {
     const [history, setHistory] = useState(() => JSON.parse(localStorage.getItem('ps_detailed_history') || '[]'))
     const [spendings, setSpendings] = useState([])
     const [loading, setLoading] = useState(true)
@@ -21,19 +21,28 @@ export default function Statistics({ freeRooms, activeRooms, setActivePage }) {
             if (sError) throw sError
 
             if (hData) {
+                // Filter by current user
+                const filteredHData = hData.filter(h => h.client?.includes(`[Staff:${user?.name || user?.username || 'Unknown'}]`))
+
                 setHistory(prev => {
-                    const merged = [...hData]
+                    const merged = [...filteredHData]
                     prev.forEach(local => {
-                        const isDuplicate = hData.some(remote =>
+                        const isDuplicate = filteredHData.some(remote =>
                             remote.id === local.id ||
                             (remote.created_at === local.created_at && (remote.room_name || remote.name) === (local.room_name || local.name))
                         )
-                        if (!isDuplicate) merged.push(local)
+                        // Ensure local also matches user
+                        const isMine = local.client?.includes(`[Staff:${user?.name || user?.username || 'Unknown'}]`)
+                        if (!isDuplicate && isMine) merged.push(local)
                     })
                     return merged
                 })
             }
-            if (sData) setSpendings(sData)
+            if (sData) {
+                // Filter spendings by staff tag in description (assuming it will be tagged there)
+                const filteredSData = sData.filter(s => s.description?.includes(`[Staff:${user?.name || user?.username || 'Unknown'}]`))
+                setSpendings(filteredSData)
+            }
         } catch (err) {
             console.error("Stats fetch error:", err)
         } finally {
@@ -148,7 +157,7 @@ export default function Statistics({ freeRooms, activeRooms, setActivePage }) {
                             spendings.slice(0, 4).map((s, i) => (
                                 <div key={i} className="flex justify-between items-center p-4 rounded-2xl bg-[#0f0c1e] border border-[#2d2556] hover:border-rose-500/30 transition-all">
                                     <div className="min-w-0 flex-1 mr-4">
-                                        <p className="text-white font-bold text-sm truncate">{s.description}</p>
+                                        <p className="text-white font-bold text-sm truncate">{s.description?.split(' [Staff:')[0] || s.description}</p>
                                         <p className="text-slate-500 text-[10px] uppercase font-bold mt-0.5">{s.date}</p>
                                     </div>
                                     <div className="text-right flex-shrink-0">

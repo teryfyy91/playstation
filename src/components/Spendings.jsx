@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Plus, X, Pencil, Trash2, Wallet, TrendingDown, Receipt } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
-export default function Spendings() {
+export default function Spendings({ user }) {
     const [spendings, setSpendings] = useState([])
     const [showForm, setShowForm] = useState(false)
     const [editId, setEditId] = useState(null)
@@ -21,7 +21,10 @@ export default function Spendings() {
             .select('*')
             .order('date', { ascending: false })
 
-        if (!error && data) setSpendings(data)
+        if (!error && data) {
+            const filtered = data.filter(s => s.description?.includes(`[Staff:${user?.name || user?.username || 'Unknown'}]`))
+            setSpendings(filtered)
+        }
         setLoading(false)
     }
 
@@ -34,7 +37,7 @@ export default function Spendings() {
             const spendingData = {
                 amount: Number(form.amount),
                 date: form.date,
-                description: form.description
+                description: `${form.description} [Staff:${user?.name || user?.username || 'Unknown'}]`
             }
 
             if (editId) {
@@ -60,7 +63,11 @@ export default function Spendings() {
     const startEdit = (id) => {
         const target = spendings.find(s => s.id === id)
         if (target) {
-            setForm({ amount: target.amount, date: target.date, description: target.description })
+            setForm({
+                amount: target.amount,
+                date: target.date,
+                description: target.description?.split(' [Staff:')[0] || target.description
+            })
             setEditId(id)
             setShowForm(true)
         }
@@ -154,7 +161,7 @@ export default function Spendings() {
                                     <TrendingDown size={20} />
                                 </div>
                                 <div>
-                                    <p className="text-white font-black text-lg tracking-tight mb-0.5">{s.description}</p>
+                                    <p className="text-white font-black text-lg tracking-tight mb-0.5">{s.description?.split(' [Staff:')[0] || s.description}</p>
                                     <div className="flex items-center gap-3">
                                         <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">{s.date}</p>
                                     </div>

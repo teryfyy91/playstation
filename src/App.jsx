@@ -100,11 +100,12 @@ export default function App() {
             activeRooms={activeRooms}
             setActiveRooms={setActiveRooms}
             setActivePage={setActivePage}
+            user={currentUser}
           />
         )
-      case 'statistics': return <Statistics freeRooms={freeRooms} activeRooms={activeRooms} setActivePage={setActivePage} />
+      case 'statistics': return <Statistics freeRooms={freeRooms} activeRooms={activeRooms} setActivePage={setActivePage} user={currentUser} />
       case 'bar': return <Bar />
-      case 'spendings': return <Spendings />
+      case 'spendings': return <Spendings user={currentUser} />
       case 'settings': return <Settings />
       default: return (
         <Dashboard
@@ -113,6 +114,7 @@ export default function App() {
           activeRooms={activeRooms}
           setActiveRooms={setActiveRooms}
           setActivePage={setActivePage}
+          user={currentUser}
         />
       )
     }

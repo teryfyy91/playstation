@@ -19,7 +19,7 @@ export default function Login({ onLogin }) {
             // Local fallback for admin
             if (form.username === 'admin' && form.password === '1234') {
                 setSuccess('Admin xush kelibsiz!')
-                onLogin({ username: 'admin', role: 'admin' })
+                onLogin({ name: 'Admin', username: 'admin', role: 'admin' })
                 return
             }
 
@@ -48,6 +48,7 @@ export default function Login({ onLogin }) {
             if (staffData) {
                 setSuccess(`${staffData.name} xush kelibsiz!`)
                 onLogin({
+                    name: staffData.name,
                     username: staffData.name,
                     id: staffData.id,
                     email: staffData.email,

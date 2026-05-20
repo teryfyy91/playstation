@@ -121,7 +121,7 @@ function RoomDetailsModal({ room, history, onClose, onAddOrder, isActive, onStop
                                             <Users size={18} />
                                         </div>
                                         <div>
-                                            <p className="text-white font-bold">{h.client}</p>
+                                            <p className="text-white font-bold">{h.client?.split(' [Staff:')[0] || 'Mijoz'}</p>
                                             <p className="text-slate-500 text-xs">{h.formattedTime || h.timeRange} ({h.hours} soat)</p>
                                         </div>
                                     </div>
@@ -501,8 +501,8 @@ function ReceiptModal({ receipt, onClose }) {
 
                 <div className="border-y border-dashed border-slate-200 py-4 mb-4 space-y-1.5">
                     <div className="flex justify-between text-xs">
-                        <span className="text-slate-400 font-bold uppercase tracking-widest">Xona</span>
-                        <span className="font-black text-[#0f0c1e]">{receipt.name}</span>
+                        <span className="text-slate-400 font-bold uppercase tracking-widest">Mijoz</span>
+                        <span className="font-black text-[#0f0c1e]">{receipt.client?.split(' [Staff:')[0] || receipt.client}</span>
                     </div>
                     <div className="flex justify-between text-xs">
                         <span className="text-slate-400 font-bold uppercase tracking-widest">Sana</span>
@@ -600,7 +600,7 @@ function PaymentModal({ entry, onConfirm, onCancel }) {
                         <Wallet size={32} className="text-white" />
                     </div>
                     <h3 className="text-white font-black text-2xl uppercase tracking-tighter mb-1">To'lovni Qabul Qilish</h3>
-                    <p className="text-slate-500 text-[10px] font-bold uppercase tracking-[0.2em]">{entry.name} · {entry.client}</p>
+                    <p className="text-slate-500 text-[10px] font-bold uppercase tracking-[0.2em]">{entry.name} · {entry.client?.split(' [Staff:')[0] || entry.client}</p>
                 </div>
 
                 <div className="bg-[#0f0c1e] rounded-[32px] border border-[#2d2556] p-5 mb-6">
@@ -670,7 +670,7 @@ import { supabase } from '../lib/supabase'
 import { Wallet, CreditCard } from 'lucide-react'
 
 // ─── Dashboard ───────────────────────────────────────────────────────────────
-export default function Dashboard({ freeRooms, setFreeRooms, activeRooms, setActiveRooms }) {
+export default function Dashboard({ freeRooms, setFreeRooms, activeRooms, setActiveRooms, user }) {
     const [detailsRoom, setDetailsRoom] = useState(null)
     const [showAddRoom, setShowAddRoom] = useState(false)
     const [showReceipt, setShowReceipt] = useState(null)
@@ -763,14 +763,19 @@ export default function Dashboard({ freeRooms, setFreeRooms, activeRooms, setAct
             .select('*')
             .order('created_at', { ascending: false })
         if (!error && data) {
+            // Filter by current user
+            const filteredData = data.filter(h => h.client?.includes(`[Staff:${user?.name || user?.username || 'Unknown'}]`))
+
             setHistory(prev => {
-                const merged = [...data]
+                const merged = [...filteredData]
                 prev.forEach(local => {
-                    const isDuplicate = data.some(remote =>
+                    const isDuplicate = filteredData.some(remote =>
                         remote.id === local.id ||
                         (remote.created_at === local.created_at && (remote.room_name || remote.name) === (local.room_name || local.name))
                     )
-                    if (!isDuplicate) merged.push(local)
+                    // Ensure local also matches user
+                    const isMine = local.client?.includes(`[Staff:${user?.name || user?.username || 'Unknown'}]`)
+                    if (!isDuplicate && isMine) merged.push(local)
                 })
                 return merged.sort((a, b) => new Date(b.created_at || b.date) - new Date(a.created_at || a.date))
             })
@@ -820,7 +825,7 @@ export default function Dashboard({ freeRooms, setFreeRooms, activeRooms, setAct
         const dbEntry = {
             room_id: finalEntry.roomId,
             room_name: finalEntry.name,
-            client: finalEntry.client,
+            client: `${finalEntry.client} [Staff:${user?.name || user?.username || 'Unknown'}]`,
             date: finalEntry.date,
             total_price: finalEntry.total_price,
             hours: finalEntry.hours,
