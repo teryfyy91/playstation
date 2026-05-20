@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Package, Search, Plus, X, Tag, ShoppingCart, TrendingUp } from 'lucide-react'
 import { supabase } from '../lib/supabase'
+import DeleteConfirmModal from './modals/DeleteConfirmModal'
 
 export default function Bar() {
     const [products, setProducts] = useState([])
@@ -9,6 +10,7 @@ export default function Bar() {
     const [form, setForm] = useState({ name: '', buy_price: '', price: '', stock: '' })
     const [loading, setLoading] = useState(true)
     const [editingProduct, setEditingProduct] = useState(null)
+    const [deleteId, setDeleteId] = useState(null)
 
     // Supabase dan mahsulotlarni olish
     useEffect(() => {
@@ -78,15 +80,19 @@ export default function Bar() {
         setForm({ name: '', buy_price: '', price: '', stock: '' })
     }
 
-    const deleteProduct = async (id) => {
-        if (window.confirm('Haqiqatdan ham o\'chirmoqchimisiz?')) {
-            const { error } = await supabase
-                .from('products')
-                .delete()
-                .eq('id', id)
+    const deleteProduct = async () => {
+        if (!deleteId) return
 
-            if (!error) fetchProducts()
-            else alert("O'chirishda xatolik: " + error.message)
+        const { error } = await supabase
+            .from('products')
+            .delete()
+            .eq('id', deleteId)
+
+        if (!error) {
+            fetchProducts()
+            setDeleteId(null)
+        } else {
+            alert("O'chirishda xatolik: " + error.message)
         }
     }
 
@@ -157,7 +163,7 @@ export default function Bar() {
                         <button
                             onClick={(e) => {
                                 e.stopPropagation();
-                                deleteProduct(p.id);
+                                setDeleteId(p.id);
                             }}
                             className="absolute top-4 right-4 text-slate-700 hover:text-red-500 transition opacity-0 group-hover:opacity-100 cursor-pointer p-2 z-10"
                         >
@@ -245,6 +251,14 @@ export default function Bar() {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {deleteId && (
+                <DeleteConfirmModal
+                    onConfirm={deleteProduct}
+                    onCancel={() => setDeleteId(null)}
+                    description="Ushbu mahsulotni skladdan butunlay o'chirib tashlamoqchimisiz?"
+                />
             )}
         </div>
     )

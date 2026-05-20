@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Plus, X, Pencil, Trash2, Wallet, TrendingDown, Receipt } from 'lucide-react'
 import { supabase } from '../lib/supabase'
+import DeleteConfirmModal from './modals/DeleteConfirmModal'
 
 export default function Spendings({ user }) {
     const [spendings, setSpendings] = useState([])
@@ -9,6 +10,7 @@ export default function Spendings({ user }) {
     const todayIso = new Date().toISOString().split('T')[0]
     const [form, setForm] = useState({ amount: '', date: todayIso, description: '' })
     const [loading, setLoading] = useState(true)
+    const [deleteId, setDeleteId] = useState(null)
 
     useEffect(() => {
         fetchSpendings()
@@ -73,15 +75,19 @@ export default function Spendings({ user }) {
         }
     }
 
-    const handleDelete = async (id) => {
-        if (window.confirm('Rostdan ham o\'chirmoqchimisiz?')) {
-            const { error } = await supabase
-                .from('spendings')
-                .delete()
-                .eq('id', id)
+    const handleDelete = async () => {
+        if (!deleteId) return
 
-            if (!error) fetchSpendings()
-            else alert("O'chirishda xatolik: " + error.message)
+        const { error } = await supabase
+            .from('spendings')
+            .delete()
+            .eq('id', deleteId)
+
+        if (!error) {
+            fetchSpendings()
+            setDeleteId(null)
+        } else {
+            alert("O'chirishda xatolik: " + error.message)
         }
     }
 
@@ -181,7 +187,7 @@ export default function Spendings({ user }) {
                                         <Pencil size={16} />
                                     </button>
                                     <button
-                                        onClick={() => handleDelete(s.id)}
+                                        onClick={() => setDeleteId(s.id)}
                                         className="w-10 h-10 flex items-center justify-center rounded-xl bg-[#0f0c1e] border border-[#2d2556] text-slate-400 hover:bg-red-600 hover:text-white hover:border-red-500 transition-all cursor-pointer"
                                     >
                                         <Trash2 size={16} />
@@ -266,6 +272,14 @@ export default function Spendings({ user }) {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {deleteId && (
+                <DeleteConfirmModal
+                    onConfirm={handleDelete}
+                    onCancel={() => setDeleteId(null)}
+                    description="Ushbu xarajat haqidagi ma'lumotni o'chirmoqchimisiz?"
+                />
             )}
         </div>
     )

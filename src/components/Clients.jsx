@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { User, Phone, Trophy, Search, Plus, X } from 'lucide-react'
+import DeleteConfirmModal from './modals/DeleteConfirmModal'
 
 const INITIAL_CLIENTS = []
 
@@ -11,6 +12,7 @@ export default function Clients() {
     const [search, setSearch] = useState('')
     const [showForm, setShowForm] = useState(false)
     const [form, setForm] = useState({ name: '', phone: '' })
+    const [deleteId, setDeleteId] = useState(null)
 
     useEffect(() => {
         localStorage.setItem('ps_clients', JSON.stringify(clients))
@@ -26,6 +28,12 @@ export default function Clients() {
         setClients(prev => [...prev, { ...form, id: Date.now(), sessions: 0, total: 0 }])
         setForm({ name: '', phone: '' })
         setShowForm(false)
+    }
+
+    const handleDelete = () => {
+        if (!deleteId) return
+        setClients(prev => prev.filter(x => x.id !== deleteId))
+        setDeleteId(null)
     }
 
     return (
@@ -79,7 +87,7 @@ export default function Clients() {
                             <p className="text-slate-500 text-xs">{c.total.toLocaleString()} so'm</p>
                         </div>
                         <button
-                            onClick={() => setClients(prev => prev.filter(x => x.id !== c.id))}
+                            onClick={() => setDeleteId(c.id)}
                             className="text-slate-600 hover:text-red-400 transition cursor-pointer flex-shrink-0"
                         >
                             <X size={15} />
@@ -113,6 +121,14 @@ export default function Clients() {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {deleteId && (
+                <DeleteConfirmModal
+                    onConfirm={handleDelete}
+                    onCancel={() => setDeleteId(null)}
+                    description="Ushbu mijozni ro'yxatdan butunlay o'chirib tashlamoqchimisiz?"
+                />
             )}
         </div>
     )

@@ -555,23 +555,7 @@ function ReceiptModal({ receipt, onClose }) {
 }
 
 // ─── Delete Confirmation Modal ────────────────────────────────────────────────
-function DeleteConfirmModal({ onConfirm, onCancel }) {
-    return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto">
-            <div className="bg-[#1a1630] border border-[#2d2556] rounded-[32px] p-8 w-full max-w-sm shadow-2xl animate-scaleUp text-center my-auto">
-                <div className="w-16 h-16 rounded-2xl bg-red-600/10 flex items-center justify-center mx-auto mb-6 text-red-500">
-                    <AlertTriangle size={32} />
-                </div>
-                <h3 className="text-white font-black text-xl mb-2 uppercase tracking-tight">O'chirishni Tasdiqlash</h3>
-                <p className="text-slate-400 text-sm mb-8">Haqiqatan ham ushbu xonani o'chirmoqchimisiz? Bu amalni orqaga qaytarib bo'lmaydi.</p>
-                <div className="flex gap-3">
-                    <button onClick={onCancel} className="flex-1 py-4 rounded-2xl bg-[#0f0c1e] border border-[#2d2556] text-slate-500 font-bold text-xs uppercase tracking-widest hover:text-white transition cursor-pointer">Bekor Qilish</button>
-                    <button onClick={onConfirm} className="flex-1 py-4 rounded-2xl bg-red-600 text-white font-black text-xs uppercase tracking-widest shadow-lg shadow-red-900/40 hover:bg-red-500 transition cursor-pointer">Ha, O'chirish</button>
-                </div>
-            </div>
-        </div>
-    )
-}
+// DeleteConfirmModal was here, now using shared component
 
 // ─── Payment Modal ────────────────────────────────────────────────────────────
 function PaymentModal({ entry, onConfirm, onCancel }) {
@@ -668,6 +652,7 @@ function PaymentModal({ entry, onConfirm, onCancel }) {
 
 import { supabase } from '../lib/supabase'
 import { Wallet, CreditCard } from 'lucide-react'
+import DeleteConfirmModal from './modals/DeleteConfirmModal'
 
 // ─── Dashboard ───────────────────────────────────────────────────────────────
 export default function Dashboard({ freeRooms, setFreeRooms, activeRooms, setActiveRooms, user }) {
