@@ -17,7 +17,9 @@ function formatTime(seconds) {
 }
 
 function formatMoney(num) {
-    return Number(num).toLocaleString('uz-UZ') + " so'm"
+    const value = Number(num)
+    if (isNaN(value)) return "0 so'm"
+    return value.toLocaleString('uz-UZ') + " so'm"
 }
 
 // ─── Countdown ─────────────────────────────────────────────────────────────
@@ -126,7 +128,7 @@ function RoomDetailsModal({ room, history, onClose, onAddOrder, isActive, onStop
                                         </div>
                                     </div>
                                     <div className="text-right">
-                                        <p className="text-emerald-400 font-black">{formatMoney(h.total_price || h.totalPrice)}</p>
+                                        <p className="text-emerald-400 font-black">{formatMoney(h.total_price || h.totalPrice || 0)}</p>
                                         {h.products?.length > 0 && (
                                             <p className="text-slate-600 text-[10px] uppercase font-bold">
                                                 {h.products.length} ta mahsulot: {h.products.map(p => p.name).join(', ')}
@@ -774,7 +776,7 @@ export default function Dashboard({ freeRooms, setFreeRooms, activeRooms, setAct
         const now = new Date()
         const start = new Date(stopped.startTimeActual).getTime()
         const hours = (now.getTime() - start) / (1000 * 3600)
-        const itemsTotal = (stopped.orders || []).reduce((sum, p) => sum + Number(p.price), 0)
+        const itemsTotal = (stopped.orders || []).reduce((sum, p) => sum + (Number(p.price) || 0), 0)
         const preciseTotal = Math.round(hours * Number(stopped.price)) + itemsTotal
         const roundedTotal = Math.round(preciseTotal / 1000) * 1000
 
