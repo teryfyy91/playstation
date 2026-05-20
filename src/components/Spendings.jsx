@@ -4,20 +4,24 @@ import { supabase } from '../lib/supabase'
 import DeleteConfirmModal from './modals/DeleteConfirmModal'
 
 export default function Spendings({ user }) {
-    const [spendings, setSpendings] = useState([])
+    const [spendings, setSpendings] = useState(() => JSON.parse(localStorage.getItem('ps_spendings_cache_main') || '[]'))
     const [showForm, setShowForm] = useState(false)
     const [editId, setEditId] = useState(null)
     const todayIso = new Date().toISOString().split('T')[0]
     const [form, setForm] = useState({ amount: '', date: todayIso, description: '' })
-    const [loading, setLoading] = useState(true)
+    const [loading, setLoading] = useState(spendings.length === 0)
     const [deleteId, setDeleteId] = useState(null)
 
     useEffect(() => {
         fetchSpendings()
     }, [])
 
+    useEffect(() => {
+        localStorage.setItem('ps_spendings_cache_main', JSON.stringify(spendings))
+    }, [spendings])
+
     const fetchSpendings = async () => {
-        setLoading(true)
+        if (spendings.length === 0) setLoading(true)
         const { data, error } = await supabase
             .from('spendings')
             .select('*')

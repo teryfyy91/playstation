@@ -4,11 +4,11 @@ import { supabase } from '../lib/supabase'
 import DeleteConfirmModal from './modals/DeleteConfirmModal'
 
 export default function Bar() {
-    const [products, setProducts] = useState([])
+    const [products, setProducts] = useState(() => JSON.parse(localStorage.getItem('ps_bar_products') || '[]'))
     const [search, setSearch] = useState('')
     const [showForm, setShowForm] = useState(false)
     const [form, setForm] = useState({ name: '', buy_price: '', price: '', stock: '' })
-    const [loading, setLoading] = useState(true)
+    const [loading, setLoading] = useState(products.length === 0)
     const [editingProduct, setEditingProduct] = useState(null)
     const [deleteId, setDeleteId] = useState(null)
 
@@ -17,8 +17,12 @@ export default function Bar() {
         fetchProducts()
     }, [])
 
+    useEffect(() => {
+        localStorage.setItem('ps_bar_products', JSON.stringify(products))
+    }, [products])
+
     const fetchProducts = async () => {
-        setLoading(true)
+        if (products.length === 0) setLoading(true)
         const { data, error } = await supabase
             .from('products')
             .select('*')

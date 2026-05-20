@@ -4,15 +4,19 @@ import { supabase } from '../lib/supabase'
 
 export default function Statistics({ freeRooms, activeRooms, setActivePage, user }) {
     const [history, setHistory] = useState(() => JSON.parse(localStorage.getItem('ps_detailed_history') || '[]'))
-    const [spendings, setSpendings] = useState([])
-    const [loading, setLoading] = useState(true)
+    const [spendings, setSpendings] = useState(() => JSON.parse(localStorage.getItem('ps_spendings_cache') || '[]'))
+    const [loading, setLoading] = useState(history.length === 0)
 
     useEffect(() => {
         fetchData()
     }, [])
 
+    useEffect(() => {
+        localStorage.setItem('ps_spendings_cache', JSON.stringify(spendings))
+    }, [spendings])
+
     const fetchData = async () => {
-        setLoading(true)
+        if (history.length === 0) setLoading(true)
         try {
             const { data: hData, error: hError } = await supabase.from('history').select('*').order('created_at', { ascending: false })
             const { data: sData, error: sError } = await supabase.from('spendings').select('*')
