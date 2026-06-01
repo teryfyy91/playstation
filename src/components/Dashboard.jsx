@@ -817,11 +817,31 @@ export default function Dashboard({ freeRooms, setFreeRooms, activeRooms, setAct
 
     const handleAddProduct = async (room, product) => {
         if (!product) { setQuickProductRoom(room); return; }
+
+        // 1. Active rooms ga qo'shish
         setActiveRooms(prev => prev.map(r =>
             (String(r.id) === String(room.id) || r.name.toLowerCase() === room.name.toLowerCase())
                 ? { ...r, orders: [...(r.orders || []), product] }
                 : r
         ))
+
+        // 2. Lokal barProducts stokini kamaytirish
+        setBarProducts(prev => prev.map(p =>
+            String(p.id) === String(product.id)
+                ? { ...p, stock: Math.max(0, Number(p.stock) - 1) }
+                : p
+        ))
+
+        // 3. Supabase da stokni kamaytirish
+        try {
+            const newStock = Math.max(0, Number(product.stock) - 1)
+            await supabase
+                .from('products')
+                .update({ stock: newStock })
+                .eq('id', product.id)
+        } catch (err) {
+            console.error('Stok yangilashda xatolik:', err)
+        }
     }
 
     const handleDeleteHistory = async () => {
