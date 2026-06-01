@@ -909,7 +909,7 @@ export default function Dashboard({ freeRooms, setFreeRooms, activeRooms, setAct
             {showReceipt && <ReceiptModal receipt={showReceipt} onClose={() => setShowReceipt(null)} />}
             {detailsRoom && (
                 <RoomDetailsModal
-                    room={detailsRoom}
+                    room={activeRooms.find(r => String(r.id) === String(detailsRoom.id)) || detailsRoom}
                     history={history}
                     onClose={() => setDetailsRoom(null)}
                     onAddOrder={handleAddProduct}
